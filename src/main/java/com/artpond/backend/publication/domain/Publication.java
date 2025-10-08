@@ -32,7 +32,7 @@ public class Publication {
 
     @ManyToOne
     @JoinColumn(nullable = false)
-    private User author;
+    private User owner;
 
     @Column(nullable = true)
     private String descrption;
