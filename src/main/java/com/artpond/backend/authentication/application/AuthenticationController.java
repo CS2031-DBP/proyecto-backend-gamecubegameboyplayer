@@ -4,6 +4,7 @@ import com.artpond.backend.authentication.domain.AuthenticationService;
 import com.artpond.backend.authentication.dto.JwtAuthLoginDto;
 import com.artpond.backend.authentication.dto.LoginResponseDto;
 import com.artpond.backend.user.domain.UserService;
+import com.artpond.backend.user.dto.RegisterUserDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -20,13 +21,15 @@ public class AuthenticationController {
     private final UserService userService;
     private final ModelMapper modelMapper;
 
-    @PostMapping("/login")
-    public LoginResponseDto login(@Valid @RequestBody final JwtAuthLoginDto dto) {
-        return authenticationService.jwtLogin(dto);
-    }
-
     @PostMapping("/register")
     public LoginResponseDto register(@Valid @RequestBody final RegisterUserDto dto) {
         return authenticationService.jwtRegister(dto);
     }
+
+    @PostMapping("/login")
+    public LoginResponseDto login(@Valid @RequestBody final JwtAuthLoginDto dto) {
+        System.out.println("dto "+dto);
+        return authenticationService.jwtLogin(dto);
+    }
+
 }

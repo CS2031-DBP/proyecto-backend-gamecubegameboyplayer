@@ -1,12 +1,19 @@
-package com.artpond.backend.authentication.dto;
+package com.artpond.backend.user.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class JwtAuthLoginDto {
+public class RegisterUserDto {
+
     @NotBlank
     private String email;
+
     @NotBlank
     private String password;
+
+    @NotBlank
+    private String username;
+
+    // add displayName
 }
