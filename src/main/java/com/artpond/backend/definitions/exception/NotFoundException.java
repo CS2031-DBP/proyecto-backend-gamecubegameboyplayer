@@ -1,10 +1,16 @@
 package com.artpond.backend.definitions.exception;
 
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.http.HttpStatus;
 
-public class NotFoundException extends ResponseStatusException {
+@ResponseStatus(HttpStatus.NOT_FOUND)
+public class NotFoundException extends RuntimeException {
+
+    public NotFoundException() {
+        this("Requested item not found.");
+    }
+
     public NotFoundException(final String message) {
-        super(HttpStatus.NOT_FOUND, message);
+        super(message);
     }
 }
