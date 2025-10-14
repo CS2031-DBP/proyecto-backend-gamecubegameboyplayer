@@ -35,38 +35,38 @@ public class Publication {
     private User owner;
 
     @Column(nullable = true)
-    private String descrption;
+    private String descrption;                      /// ok
 
     @Column(nullable = false)
     private Boolean contentWarning = false;
 
     @Column(nullable = false)
-    private Boolean moderated = false;
+    private Boolean moderated = false;              /// ***
 
     @CreationTimestamp
     @Column(nullable = false)
-    private Instant creationDate;
+    private Instant creationDate;                   /// ok
 
     @UpdateTimestamp
     @Column(nullable = false)
-    private Instant updatedDate;
-
+    private Instant updatedDate;                    /// debatable ***
+/*
     @ElementCollection
     @OrderBy("tags")
-    private List<String> tags = new ArrayList<>();
-
+    private List<String> tags = new ArrayList<>();  /// needed but i think it need t be a more complex system
+*/
     @OneToMany
-    private List<Heart> hearts = new ArrayList<>();
+    private List<User> likes;
 
     @Override
     public boolean equals(final Object obj) {
         if (obj == null || getClass() != obj.getClass())
             return false;
         return Objects.equals(id, ((Publication)obj).id);
-    }
+    } /// &&&
 
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
+    } /// &&&
 }
