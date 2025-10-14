@@ -35,7 +35,7 @@ public class Publication {
     private User owner;
 
     @Column(nullable = true)
-    private String descrption;                      /// ok
+    private String description;                      /// ok
 
     @Column(nullable = false)
     private Boolean contentWarning = false;
@@ -48,13 +48,13 @@ public class Publication {
     private Instant creationDate;                   /// ok
 
     @UpdateTimestamp
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Instant updatedDate;                    /// debatable ***
-/*
+
     @ElementCollection
     @OrderBy("tags")
     private List<String> tags = new ArrayList<>();  /// needed but i think it need t be a more complex system
-*/
+
     @OneToMany
     private List<User> likes;
 

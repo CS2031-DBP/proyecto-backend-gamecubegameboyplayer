@@ -28,7 +28,6 @@ public class AuthenticationController {
 
     @PostMapping("/login")
     public LoginResponseDto login(@Valid @RequestBody final JwtAuthLoginDto dto) {
-        System.out.println("dto "+dto);
         return authenticationService.jwtLogin(dto);
     }
 

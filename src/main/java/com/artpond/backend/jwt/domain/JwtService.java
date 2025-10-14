@@ -43,7 +43,7 @@ public class JwtService {
 
     public String generateToken(UserDto user) {
         return Jwts.builder()
-                .setSubject(user.getId().toString())
+                .setSubject(user.getUserId().toString())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 3600000))
                 .signWith(getSignInKey())

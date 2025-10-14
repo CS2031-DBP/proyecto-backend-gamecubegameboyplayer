@@ -15,5 +15,8 @@ public class RegisterUserDto {
     @NotBlank
     private String username;
 
+    @NotBlank
+    private String displayName;
+
     // add displayName
 }

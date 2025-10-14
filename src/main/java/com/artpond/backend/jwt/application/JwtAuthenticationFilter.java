@@ -41,12 +41,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             maybeAuth.ifPresent(SecurityContextHolder.getContext()::setAuthentication);
         }
 
+        try {
         filterChain.doFilter(request, response);
-
-        SecurityContextHolder.clearContext();
-
-        filterChain.doFilter(request, response);
-
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
     }
 
     private String resolveToken(HttpServletRequest request) {
