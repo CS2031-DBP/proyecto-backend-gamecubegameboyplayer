@@ -1,6 +1,7 @@
 package com.artpond.backend.user.domain;
 
 import com.artpond.backend.publication.domain.Publication;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
@@ -26,7 +27,10 @@ public class User implements UserDetails {
     @Column(nullable = false, unique = true)
     private String username;
 
-    @Column(nullable = true) // cambiar
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
+    @Column(nullable = true) // modify
     private String displayName;
 
     @Column(nullable = false, unique = true)
@@ -35,20 +39,25 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
-    @Enumerated(EnumType.STRING)
-    private Role role; // list?
+    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<Publication> publications = new ArrayList<>();
 
-
-    //private List<Publication> likedPosts = new ArrayList<>();
+    @ManyToMany
+    @JoinTable(
+            name = "user_saved_publications",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "publication_id")
+    )
+    private List<Publication> savedPublications = new ArrayList<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-/*
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        /*
         return User.getRoles.stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
                 .collect(Collectors.toList());
-*/
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
-
+        */
     }
 }

@@ -1,36 +1,38 @@
 package com.artpond.backend.user.domain;
 
 import com.artpond.backend.user.dto.RegisterUserDto;
-import com.artpond.backend.user.dto.UserDto;
+import com.artpond.backend.user.dto.UserResponseDto;
 import com.artpond.backend.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
 
-    public User loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User " + username + " not found"));
+        return modelMapper.map(user, UserDetails.class);
     }
 
-    public UserDto registerUser (RegisterUserDto dto, PasswordEncoder passwordEncoder) {
+    public UserResponseDto registerUser (RegisterUserDto dto, PasswordEncoder passwordEncoder) {
         User user = new User();
         user.setEmail(dto.getEmail());
         user.setUsername(dto.getUsername());
-        user.setDisplayName("dto.getDisplayName()");
+        user.setDisplayName("placeholder"); // display name dto
         user.setPassword(passwordEncoder.encode(dto.getPassword())); // HASH HERE
         user.setRole(Role.USER);
 
-        return modelMapper.map( userRepository.save(user), UserDto.class);
+        return modelMapper.map( userRepository.saveAndFlush(user), UserResponseDto.class); // change to return user
     }
 
     public User getUserById (Long id) {
@@ -38,6 +40,15 @@ public class UserService {
     }
 
     public User findByEmail (String email) {
-        return userRepository.findByEmail(email);
+        return userRepository.findByEmail(email).orElseThrow();
     }
+/*
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository
+                .findByEmail(username)
+                .orElseThrow();
+    }
+
+ */
 }

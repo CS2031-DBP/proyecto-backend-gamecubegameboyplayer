@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface PublicationRepository extends JpaRepository<Publication, Long> {
-    List<Publication> findByOwner(User owner);
 }
+// should it be transactional

@@ -2,26 +2,21 @@ package com.artpond.backend.jwt.domain;
 
 import com.artpond.backend.user.domain.User;
 import com.artpond.backend.user.domain.UserService;
-import com.artpond.backend.user.dto.UserDto;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
-import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Function;
 
 @Service
@@ -29,23 +24,28 @@ import java.util.function.Function;
 public class JwtService {
 
     @Value("${jwt.secret}")
-    private String key;
+    private String secret;
+
+    @Value("${jwt.expiration-access}")
+    private Long accessTokenExpiration;
 
     private final UserService userService;
 
     private Key getSignInKey() {
-        return Keys.hmacShaKeyFor(key.getBytes());
+        return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
     public <T> T extractClaim(Claims claims, Function<Claims, T> resolver) {
         return resolver.apply(claims);
     }
 
-    public String generateToken(UserDto user) {
+    public String generateToken(UserDetails userDetails) {
+        Date now = new Date();
         return Jwts.builder()
-                .setSubject(user.getId().toString())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 3600000))
+                .subject(userDetails.getUsername())
+                .claim("roles", userDetails.getAuthorities())
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + accessTokenExpiration))
                 .signWith(getSignInKey())
                 .compact();
     }
@@ -81,4 +81,25 @@ public class JwtService {
         }
     }
 
+    public boolean isTokenValid(String token) {
+        try {
+            Jwts.parser()
+                    .verifyWith((SecretKey) getSignInKey())
+                    .build()
+                    .parseSignedClaims(token);
+            return true;
+        }
+        catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    public String extractUsername(String token) {
+        return Jwts.parser()
+                .verifyWith((SecretKey) getSignInKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
+    }
 }

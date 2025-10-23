@@ -7,8 +7,13 @@ import com.artpond.backend.publication.dto.PublicationResponseDto;
 import com.artpond.backend.user.domain.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -22,19 +27,22 @@ public class PublicationController {
     private final PublicationService publicationService;
 
     @PostMapping
-    public ResponseEntity<PublicationResponseDto> createPost(@Valid @RequestBody CreatePublicationDto dto,
-                                                  Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
-        PublicationResponseDto createdPublication = publicationService.createPublication(user, dto);
+    @PreAuthorize("hasRole('USER') or hasRole('ARTIST')")
+    public ResponseEntity<PublicationResponseDto> createPublication(@Valid @RequestBody CreatePublicationDto dto,
+                                                  @AuthenticationPrincipal UserDetails userDetails) {
+        PublicationResponseDto createdPublication =  publicationService.createPublication(dto, userDetails.getUsername());
         return ResponseEntity.created(URI.create("/publication/" + createdPublication.getId())).body(createdPublication);
     } /// hacer publication
 
     @GetMapping
-    public ResponseEntity<List<PublicationResponseDto>> getAllPosts(Authentication authentication) {
-        return ResponseEntity.ok(publicationService.getAllPublications());
+    public ResponseEntity<Page<PublicationResponseDto>> getAllPosts(Pageable pageable) {
+        return ResponseEntity.ok(publicationService.getAllPublications(pageable));
     }
 
-    ///  GET SINGULAR PUBLICATION
+    @GetMapping("/{id}")
+    public ResponseEntity<PublicationResponseDto> getPublication(@PathVariable Long id) {
+        return ResponseEntity.ok(publicationService.getPublicationById(id));
+    }
 
     ///  GET BY TAGS -> ALL
 
