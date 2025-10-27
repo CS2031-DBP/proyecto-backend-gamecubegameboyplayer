@@ -3,6 +3,7 @@ package com.artpond.backend.user.application;
 import com.artpond.backend.user.domain.UserService;
 import com.artpond.backend.user.dto.PublicUserDto;
 
+import com.artpond.backend.user.dto.UserResponseDto;
 import lombok.RequiredArgsConstructor;
 
 import org.modelmapper.ModelMapper;
@@ -17,7 +18,7 @@ public class UserController {
     private final ModelMapper modelMapper;
 
     @GetMapping("/{id}")
-    public ResponseEntity<PublicUserDto> getUsers(@PathVariable Long id) {
-        return ResponseEntity.ok(modelMapper.map(userService.getUserById(id), PublicUserDto.class));
+    public ResponseEntity<UserResponseDto> getUsers(@PathVariable Long id) {
+        return ResponseEntity.ok(modelMapper.map(userService.getUserById(id), UserResponseDto.class));
     }
 }

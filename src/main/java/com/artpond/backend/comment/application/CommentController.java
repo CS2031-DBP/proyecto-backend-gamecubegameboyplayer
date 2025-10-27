@@ -1,17 +1,33 @@
 package com.artpond.backend.comment.application;
 
+import com.artpond.backend.comment.domain.Comment;
 import com.artpond.backend.comment.domain.CommentService;
+import com.artpond.backend.comment.dto.CreateCommentDto;
+import com.artpond.backend.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
+import java.util.List;
 
 @RestController
+@RequestMapping("/publication/{publicationId}/comment")
 @RequiredArgsConstructor
 public class CommentController {
     private final CommentService commentService;
+
     @PostMapping
-    public ResponseEntity<?> publishComment() {
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Comment> addComment(@PathVariable Long publicationId,
+                                              @RequestBody CreateCommentDto dto,
+                                              @AuthenticationPrincipal User user) {
+        Comment comment = commentService.createComment(publicationId, dto, user.getUserId());
+        return ResponseEntity.created(URI.create("/comment/" + comment.getId())).body(comment);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Comment>> getComments(@PathVariable Long publicationId) {
+        return ResponseEntity.ok(commentService.getComments(publicationId));
     }
 }

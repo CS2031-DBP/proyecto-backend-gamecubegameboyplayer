@@ -1,5 +1,6 @@
 package com.artpond.backend.publication.domain;
 
+import com.artpond.backend.image.domain.Image;
 import com.artpond.backend.publication.dto.CreatePublicationDto;
 import com.artpond.backend.publication.dto.PublicationResponseDto;
 import com.artpond.backend.publication.infrastructure.PublicationRepository;
@@ -28,6 +29,11 @@ public class PublicationService {
     private final TagRepository tagRepository;
     // no me gusta tener que usar user y tag repository solo para crear una publication.
     // deberia de hacer un endopint en tags para recuperar las tags de un fandom como ao3
+
+    public Publication findPublicationById(Long id) {
+        return publicationRepository.findById(id).orElseThrow();
+    }
+
 
     public PublicationResponseDto createPublication(CreatePublicationDto dto, String username) {
             User user = userRepository.findByUsername(username).orElseThrow();
@@ -58,5 +64,11 @@ public class PublicationService {
 
     public PublicationResponseDto getPublicationById(Long id) {
         return modelMapper.map(publicationRepository.findById(id), PublicationResponseDto.class);
+    }
+
+    public PublicationResponseDto saveImages(Long id, List<Image> images) {
+        Publication publication = publicationRepository.findById(id).orElseThrow();
+        publication.setImages(images);
+        return modelMapper.map(publicationRepository.save(publication), PublicationResponseDto.class);
     }
 }

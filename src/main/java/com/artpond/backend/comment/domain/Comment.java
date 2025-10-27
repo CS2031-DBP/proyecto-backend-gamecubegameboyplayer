@@ -2,6 +2,7 @@ package com.artpond.backend.comment.domain;
 
 import com.artpond.backend.publication.domain.Publication;
 import com.artpond.backend.user.domain.User;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -24,5 +25,6 @@ public class Comment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "publication_id")
+    @JsonBackReference
     private Publication publication;
 }

@@ -2,12 +2,14 @@ package com.artpond.backend.authentication.domain;
 
 import com.artpond.backend.authentication.dto.JwtAuthLoginDto;
 import com.artpond.backend.authentication.dto.LoginResponseDto;
+import com.artpond.backend.authentication.event.UserRegisteredEvent;
 import com.artpond.backend.jwt.domain.JwtService;
 import com.artpond.backend.user.domain.UserService;
 import com.artpond.backend.user.dto.RegisterUserDto;
 import com.artpond.backend.user.dto.UserResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,6 +26,7 @@ public class AuthenticationService {
     private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final ApplicationEventPublisher publisher;
 
     public LoginResponseDto jwtRegister(final RegisterUserDto dto) {
         final UserResponseDto createdUser = userService.registerUser(dto, passwordEncoder);
@@ -35,6 +38,8 @@ public class AuthenticationService {
 
         LoginResponseDto response = modelMapper.map(createdUser, LoginResponseDto.class);
         response.setToken(token);
+
+        publisher.publishEvent(new UserRegisteredEvent(createdUser.getEmail(), createdUser.getUsername()));
         return response;
     }
 

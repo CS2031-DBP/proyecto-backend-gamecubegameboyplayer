@@ -5,6 +5,8 @@ import com.artpond.backend.user.dto.UserResponseDto;
 import com.artpond.backend.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -41,6 +43,16 @@ public class UserService implements UserDetailsService {
 
     public User findByEmail (String email) {
         return userRepository.findByEmail(email).orElseThrow();
+    }
+
+    public User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if  (authentication == null || !authentication.isAuthenticated()) {
+            throw new RuntimeException("no authenticated user found");
+        }
+
+        String username = authentication.getName();
+        return userRepository.findByUsername(username).orElseThrow();
     }
 /*
     @Override

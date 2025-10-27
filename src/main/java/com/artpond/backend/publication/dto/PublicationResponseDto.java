@@ -1,5 +1,6 @@
 package com.artpond.backend.publication.dto;
 
+import com.artpond.backend.image.domain.Image;
 import com.artpond.backend.publication.domain.Publication;
 import com.artpond.backend.tag.domain.Tag;
 import com.artpond.backend.user.domain.User;
@@ -14,5 +15,6 @@ public class PublicationResponseDto {
     private Long id;
     private String description;
     private UserResponseDto author;
+    private List<Image> images;
     private List<String> tags;
 }

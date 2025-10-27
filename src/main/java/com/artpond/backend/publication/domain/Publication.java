@@ -11,6 +11,7 @@ import com.artpond.backend.comment.domain.Comment;
 import com.artpond.backend.image.domain.Image;
 import com.artpond.backend.tag.domain.Tag;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Fetch;
@@ -45,17 +46,12 @@ public class Publication {
     @CreationTimestamp
     @Column(nullable = false)
     private LocalDateTime creationDate = LocalDateTime.now();
-/*
-    @UpdateTimestamp
-    @Column(nullable = false)
-    private Date updatedDate;
-
- */
 
     @OneToMany(mappedBy = "publication", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
     @OneToMany(mappedBy = "publication", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<Image> images = new ArrayList<>();
 
     @ManyToMany
@@ -66,6 +62,9 @@ public class Publication {
     )
     private List<Tag> tags = new ArrayList<>();
     /*
+    @UpdateTimestamp
+    @Column(nullable = false)
+    private Date updatedDate;
     @ElementCollection
     @OrderBy("tags")
     private List<String> tags = new ArrayList<>();  /// needed but i think it need t be a more complex system

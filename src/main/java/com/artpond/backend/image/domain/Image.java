@@ -6,11 +6,11 @@ import lombok.Data;
 
 @Entity
 @Data
-//table???
+@Table(name = "images") // ??
 public class Image {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
 
     private String url;
     private String altText;
