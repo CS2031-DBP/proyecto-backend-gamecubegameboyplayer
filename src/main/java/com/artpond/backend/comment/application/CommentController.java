@@ -2,7 +2,8 @@ package com.artpond.backend.comment.application;
 
 import com.artpond.backend.comment.domain.Comment;
 import com.artpond.backend.comment.domain.CommentService;
-import com.artpond.backend.comment.dto.CreateCommentDto;
+import com.artpond.backend.comment.dto.CommentRequestDto;
+import com.artpond.backend.comment.dto.CommentResponseDto;
 import com.artpond.backend.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,10 +20,10 @@ public class CommentController {
     private final CommentService commentService;
 
     @PostMapping
-    public ResponseEntity<Comment> addComment(@PathVariable Long publicationId,
-                                              @RequestBody CreateCommentDto dto,
-                                              @AuthenticationPrincipal User user) {
-        Comment comment = commentService.createComment(publicationId, dto, user.getUserId());
+    public ResponseEntity<CommentResponseDto> addComment(@PathVariable Long publicationId,
+                                                         @RequestBody CommentRequestDto dto,
+                                                         @AuthenticationPrincipal User user) {
+        CommentResponseDto comment = commentService.createComment(publicationId, dto, user.getUserId());
         return ResponseEntity.created(URI.create("/comment/" + comment.getId())).body(comment);
     }
 

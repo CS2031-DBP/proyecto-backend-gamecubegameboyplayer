@@ -1,12 +1,16 @@
 package com.artpond.backend.comment.domain;
 
-import com.artpond.backend.comment.dto.CreateCommentDto;
+import com.artpond.backend.comment.dto.CommentRequestDto;
+import com.artpond.backend.comment.dto.CommentResponseDto;
 import com.artpond.backend.comment.infrastructure.CommentRepository;
 import com.artpond.backend.publication.domain.Publication;
 import com.artpond.backend.publication.domain.PublicationService;
+import com.artpond.backend.publication.dto.PublicationResponseDto;
 import com.artpond.backend.user.domain.User;
 import com.artpond.backend.user.domain.UserService;
+import com.artpond.backend.user.dto.UserResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,9 +21,9 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PublicationService publicationService;
     private final UserService userService;
+    private final ModelMapper modelMapper;
 
-    public Comment createComment(Long publicationId, CreateCommentDto dto, long userId) {
-        // is a comment dto needed???
+    public CommentResponseDto createComment(Long publicationId, CommentRequestDto dto, long userId) {
         Publication publication = publicationService.findPublicationById(publicationId);
         User author = userService.getUserById(userId);
 
@@ -27,8 +31,14 @@ public class CommentService {
         comment.setContent(dto.getText());
         comment.setPublication(publication);
         comment.setUser(author);
+        commentRepository.save(comment);
 
-        return commentRepository.save(comment);
+        CommentResponseDto commentResponseDto = new CommentResponseDto();
+        commentResponseDto.setId(comment.getId());
+        commentResponseDto.setText(comment.getContent());
+        commentResponseDto.setAuthor(modelMapper.map(author, UserResponseDto.class));
+        commentResponseDto.setPublicationId(publicationId);
+        return commentResponseDto;
     }
 
     public List<Comment> getComments(Long publicationId) {
