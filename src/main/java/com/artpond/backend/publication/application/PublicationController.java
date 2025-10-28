@@ -51,7 +51,11 @@ public class PublicationController {
     }
 
     ///  GET BY TAGS -> ALL
-
+    @GetMapping("/tag/{tagName}")
+    public ResponseEntity<Page<PublicationResponseDto>> getPublicationsByTag(@PathVariable String tagName,
+                                                                             Pageable pageable) {
+        return ResponseEntity.ok(publicationService.getPublicationsByTag(tagName, pageable));
+    }
     ///  UPDATE (TAGS DESCRIPTION?)
 
     ///  DELETE

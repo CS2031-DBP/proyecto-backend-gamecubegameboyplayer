@@ -74,6 +74,15 @@ public class PublicationService {
         });
     }
 
+    public Page<PublicationResponseDto> getPublicationsByTag(String tagName, Pageable pageable) {
+        Tag tag = tagRepository.findByName(tagName)
+                .orElseThrow(() -> new RuntimeException("Tag not found"));
+
+        Page<Publication> publications = publicationRepository.findByTagsContaining(tag, pageable);
+
+        return publications.map(pub -> modelMapper.map(pub, PublicationResponseDto.class));
+    }
+
     public PublicationResponseDto getPublicationById(Long id) {
         Publication publication = publicationRepository.findById(id).orElseThrow();
         PublicationResponseDto dto = new PublicationResponseDto();
