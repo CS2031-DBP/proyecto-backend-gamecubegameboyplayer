@@ -9,7 +9,7 @@
 
 * Fabian Arana Espinoza
 * Angel Mattos
-*
+* Natalia Ccusi
 
 ---
 
