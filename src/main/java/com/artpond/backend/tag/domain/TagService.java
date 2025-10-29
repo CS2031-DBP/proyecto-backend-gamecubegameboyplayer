@@ -14,8 +14,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TagService {
     private final TagRepository tagRepository;
-    private final PublicationRepository publicationRepository;
-    private final ModelMapper modelMapper;
 
-
+    public Void deleteTagById(Long id) {
+        tagRepository.deleteById(id);
+        return null;
+    }
 }

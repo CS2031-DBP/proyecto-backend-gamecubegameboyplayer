@@ -129,8 +129,13 @@ public class PublicationService {
         return toDto(publicationRepository.save(pub));
     }
 
-    public Void deletePublicationById(Long id) {
-        publicationRepository.deleteById(id);
+    public Void deletePublicationById(Long id, Long userId) {
+        Publication publication = publicationRepository.findById(id).orElseThrow(() -> new RuntimeException("Publication not found"));
+        if (publication.getAuthor().getUserId() == userId) {
+            publicationRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("kinshi");
+        }
         return null;
     }
 }

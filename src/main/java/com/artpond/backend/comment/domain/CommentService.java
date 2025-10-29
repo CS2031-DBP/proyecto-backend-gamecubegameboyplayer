@@ -12,6 +12,7 @@ import com.artpond.backend.user.dto.UserResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
@@ -50,5 +51,13 @@ public class CommentService {
             commentResponseDto.setCreatedAt(comment.getCreatedDate());
             return commentResponseDto;
         }).toList();
+    }
+
+    public Void deleteComment(Long commentId, Long userId) {
+        Comment comment = commentRepository.findById(commentId).orElseThrow();
+        if (comment.getUser().getUserId().equals(userId)) {
+            commentRepository.deleteById(commentId);
+        }
+        return null;
     }
 }

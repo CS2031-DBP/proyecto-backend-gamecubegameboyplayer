@@ -7,6 +7,7 @@ import com.artpond.backend.comment.dto.CommentResponseDto;
 import com.artpond.backend.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +21,7 @@ public class CommentController {
     private final CommentService commentService;
 
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ARTIST')")
     public ResponseEntity<CommentResponseDto> addComment(@PathVariable Long publicationId,
                                                          @RequestBody CommentRequestDto dto,
                                                          @AuthenticationPrincipal User user) {
@@ -30,5 +32,13 @@ public class CommentController {
     @GetMapping
     public ResponseEntity<List<CommentResponseDto>> getComments(@PathVariable Long publicationId) {
         return ResponseEntity.ok(commentService.getComments(publicationId));
+    }
+
+    @DeleteMapping
+    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ARTIST')")
+    public ResponseEntity<Void> deleteComment(@PathVariable Long commentId,
+                                              @AuthenticationPrincipal User user) {
+        commentService.deleteComment(commentId, user.getUserId());
+        return ResponseEntity.noContent().build();
     }
 }

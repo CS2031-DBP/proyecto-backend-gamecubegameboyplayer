@@ -68,8 +68,10 @@ public class PublicationController {
 
     ///  DELETE
     @DeleteMapping
-    public ResponseEntity<?> deletePublicationById(@PathVariable Long id) {
-        publicationService.deletePublicationById(id);
+    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ARTIST')")
+    public ResponseEntity<?> deletePublicationById(@PathVariable Long id,
+                                                   @AuthenticationPrincipal User userDetails) {
+        publicationService.deletePublicationById(id, userDetails.getUserId());
         return ResponseEntity.noContent().build();
     }
 }

@@ -54,6 +54,11 @@ public class UserService implements UserDetailsService {
         String username = authentication.getName();
         return userRepository.findByUsername(username).orElseThrow();
     }
+
+    public Void deleteUserById (Long id) {
+        userRepository.deleteById(id);
+        return null;
+    }
 /*
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

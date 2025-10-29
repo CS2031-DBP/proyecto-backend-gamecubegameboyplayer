@@ -21,4 +21,10 @@ public class UserController {
     public ResponseEntity<UserResponseDto> getUsers(@PathVariable Long id) {
         return ResponseEntity.ok(modelMapper.map(userService.getUserById(id), UserResponseDto.class));
     }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteUsers(@PathVariable Long id) {
+        userService.deleteUserById(id);
+        return ResponseEntity.noContent().build();
+    }
 }
