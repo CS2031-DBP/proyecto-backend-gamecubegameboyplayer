@@ -1,0 +1,246 @@
+{
+	"info": {
+		"_postman_id": "4a8c7da4-2e7f-4c1f-bb22-0e4619996d16",
+		"name": "Artpond Collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "47767520",
+		"_collection_link": "https://artpond-testing.postman.co/workspace/artpond-testing-Workspace~7c98fef8-c760-4bd3-b605-73561469d967/collection/47767520-4a8c7da4-2e7f-4c1f-bb22-0e4619996d16?action=share&source=collection_link&creator=47767520"
+	},
+	"item": [
+		{
+			"name": "publication",
+			"item": [
+				{
+					"name": "Get publication",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/publication/1",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"publication",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create publication",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "description",
+									"value": "my stuff",
+									"description": "description",
+									"type": "text"
+								},
+								{
+									"key": "contentWarning",
+									"value": "false",
+									"description": "true if explicit material",
+									"type": "text"
+								},
+								{
+									"key": "tags",
+									"value": "art, good",
+									"description": "tags",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseURL}}/publication",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"publication"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "register",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"try {\r",
+							"  const responseText = pm.response.text();\r",
+							"  const jsonEndIndex = responseText.lastIndexOf('}') + 1;\r",
+							"  const jsonString = responseText.substring(0, jsonEndIndex);\r",
+							"  const jsonData = JSON.parse(jsonString);\r",
+							"\r",
+							"  if (jsonData.token) {\r",
+							"    pm.collectionVariables.set('jwt_token', jsonData.token);\r",
+							"    console.log('✅ JWT stored:', jsonData.token);\r",
+							"  } else {\r",
+							"    console.warn('⚠️ Token not found in response');\r",
+							"  }\r",
+							"\r",
+							"  if (jsonData.userId) {\r",
+							"    pm.collectionVariables.set('user_id', jsonData.userId);\r",
+							"    console.log('✅ User ID stored:', jsonData.userId);\r",
+							"  }\r",
+							"} catch (e) {\r",
+							"  console.error('Failed to parse JSON response:', e);\r",
+							"}\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"email\": \"artlover@example.com\",\r\n    \"password\": \"securePassword123\",\r\n    \"username\": \"artpondFan\",\r\n    \"displayName\": \"Art Pond Enthusiast\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseURL}}/auth/register",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"auth",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"try {",
+							"  let responseText = pm.response.text();",
+							"  let jsonEndIndex = responseText.lastIndexOf('}') + 1;",
+							"  let jsonString = responseText.substring(0, jsonEndIndex);",
+							"  let jsonData = JSON.parse(jsonString);",
+							"  if (jsonData.token) {",
+							"    pm.collectionVariables.set('jwt_token', jsonData.token);",
+							"    console.log('JWT stored:', jsonData.token);",
+							"  } else {",
+							"    console.error('Token not found in response JSON');",
+							"  }",
+							"} catch (e) {",
+							"  console.error('Failed to parse JSON response:', e);",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"username\": \"artpondFan\",\r\n  \"password\": \"securePassword123\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseURL}}/auth/login",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "read",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseURL}}/user/{{user_id}}",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"user",
+						"{{user_id}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseURL",
+			"value": "http://localhost:8080",
+			"type": "default"
+		},
+		{
+			"key": "baseURL",
+			"value": ""
+		},
+		{
+			"key": "jwt_token",
+			"value": ""
+		}
+	]
+}
