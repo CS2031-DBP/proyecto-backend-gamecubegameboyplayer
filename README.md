@@ -84,7 +84,7 @@ Este proyecto busca crear un entorno donde cada usuario pueda publicar librement
     * Creación, visualización y listado de publicaciones.
   ```
   curl --location 'http://localhost:8080/publication' \
-    --header 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhcnRwb25kRmFuIiwicm9sZXMiOlt7ImF1dGhvcml0eSI6IlJPTEVfVVNFUiJ9XSwiaWF0IjoxNzYxNzE1MDUxLCJleHAiOjE3NjE3MTU2NTF9.vJ4vhgQZdKlbMdijvLJA5McfRmooX-1u9e3r5mvMheZi5UweF14k-zH-8kjLahg2m8comBr4GKrKLy9cqEbN5w' \
+    --header 'Authorization: Bearer {token}' \
     --header 'Content-Type: application/json' \
     --data '{
     "description": "My first art post!",
@@ -119,7 +119,7 @@ Este proyecto busca crear un entorno donde cada usuario pueda publicar librement
     * Sistema para agregar comentarios a publicaciones.
   ```
   curl --location 'http://localhost:8080/publication/1/comment' \
-    --header 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhcnRwb25kRmFuIiwicm9sZXMiOlt7ImF1dGhvcml0eSI6IlJPTEVfVVNFUiJ9XSwiaWF0IjoxNzYxNzE1MDUxLCJleHAiOjE3NjE3MTU2NTF9.vJ4vhgQZdKlbMdijvLJA5McfRmooX-1u9e3r5mvMheZi5UweF14k-zH-8kjLahg2m8comBr4GKrKLy9cqEbN5w' \
+    --header 'Authorization: Bearer {token}' \
     --header 'Content-Type: application/json' \
     --data '{
     "text": "This artwork is stunning!"
