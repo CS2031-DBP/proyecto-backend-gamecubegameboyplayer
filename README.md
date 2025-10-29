@@ -8,8 +8,8 @@
 **Integrantes:**
 
 * Fabian Arana Espinoza
-* Angel Ma
-*
+* Angel Mattos
+* Natalia Ccusi
 
 ---
 
@@ -153,12 +153,8 @@ El proyecto utiliza eventos para desacoplar procesos internos (por ejemplo, noti
 
 ## GitHub & Management
 
-* **Control de versiones:**
-  Uso de GitFlow con ramas por feature y commits descriptivos.
-* **Gestión del proyecto:**
-  Uso de **GitHub Projects** para asignación de tareas, seguimiento de progreso y deadlines.
-* **CI/CD:**
-  GitHub Actions configurado para ejecución automática de tests.
+* **Docker deployment:**
+  Carga automatica de la imagen de Docker a Docker Hub, utilizando Github Actions y llaves secretas.
 
 ---
 
