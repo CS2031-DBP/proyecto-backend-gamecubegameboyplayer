@@ -78,9 +78,16 @@ public class PublicationService {
         Tag tag = tagRepository.findByName(tagName)
                 .orElseThrow(() -> new RuntimeException("Tag not found"));
 
-        Page<Publication> publications = publicationRepository.findByTagsContaining(tag, pageable);
-
-        return publications.map(pub -> modelMapper.map(pub, PublicationResponseDto.class));
+        return publicationRepository.findByTagsContaining(tag, pageable).map(pub ->
+        {
+            PublicationResponseDto dto = new PublicationResponseDto();
+            dto.setId(pub.getId());
+            dto.setDescription(pub.getDescription());
+            dto.setAuthor(modelMapper.map(pub.getAuthor(), UserResponseDto.class));
+            dto.setImages(pub.getImages().stream().map(img -> modelMapper.map(img, ImageResponseDto.class)).collect(Collectors.toList()));
+            dto.setTags(pub.getTags().stream().map(Tag::getName).collect(Collectors.toList()));
+            return dto;
+        });
     }
 
     public PublicationResponseDto getPublicationById(Long id) {
