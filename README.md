@@ -7,8 +7,8 @@
 
 **Integrantes:**
 
-* Fabian Arana Espinoza
-* Angel Mattos
+* Fabian Arana Espinoza (100%)
+* Angel Mattos (100%)
 * Natalia Ccusi
 
 ---
@@ -59,24 +59,77 @@ Este proyecto busca crear un entorno donde cada usuario pueda publicar librement
 * **Autenticación y Autorización JWT**
 
     * Registro e inicio de sesión de usuarios.
+  ```
+  curl --location 'http://localhost:8080/auth/register' \
+    --header 'Content-Type: application/json' \
+    --data-raw '{
+    "email": "artlover@example.com",
+    "password": "securePassword123",
+    "username": "artpondFan",
+    "displayName": "Art Pond Enthusiast"
+    }'
+  ```
     * Generación y validación de tokens JWT.
+  ```
+  curl --location 'http://localhost:8080/auth/login' \
+    --header 'Content-Type: application/json' \
+    --data '{
+    "username": "artpondFan",
+    "password": "securePassword123"
+    }'
+  ```
     * Configuración de seguridad stateless mediante Spring Security.
 * **Publicaciones**
 
     * Creación, visualización y listado de publicaciones.
+  ```
+  curl --location 'http://localhost:8080/publication' \
+    --header 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhcnRwb25kRmFuIiwicm9sZXMiOlt7ImF1dGhvcml0eSI6IlJPTEVfVVNFUiJ9XSwiaWF0IjoxNzYxNzE1MDUxLCJleHAiOjE3NjE3MTU2NTF9.vJ4vhgQZdKlbMdijvLJA5McfRmooX-1u9e3r5mvMheZi5UweF14k-zH-8kjLahg2m8comBr4GKrKLy9cqEbN5w' \
+    --header 'Content-Type: application/json' \
+    --data '{
+    "description": "My first art post!",
+    "tags": ["digital", "portrait"],
+    "images": [
+    {"url": "https://example.com/myart.png"}
+    ]
+    }'
+  ```
     * Asociación de múltiples etiquetas y múltiples imágenes.
+  ```
+  curl --location 'http://localhost:8080/publication/tag/digital?page=0&size=5'
+  ```
     * Soporte de paginación.
 * **Etiquetas (Tags)**
 
     * Creación automática de etiquetas si no existen.
+  ```
+  tagName -> tagRepository.findByName(tagName)
+                            .orElseGet(() -> {
+                                Tag newTag = new Tag();
+                                newTag.setName(tagName);
+                                return tagRepository.save(newTag);
+                            })
+  ```
     * Relación muchos a muchos entre publicaciones y etiquetas.
 * **Imágenes**
 
     * Asociación de múltiples imágenes a cada publicación.
 * **Comentarios**
 
-    * Sistema opcional para agregar comentarios a publicaciones.
+    * Sistema para agregar comentarios a publicaciones.
+  ```
+  curl --location 'http://localhost:8080/publication/1/comment' \
+    --header 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhcnRwb25kRmFuIiwicm9sZXMiOlt7ImF1dGhvcml0eSI6IlJPTEVfVVNFUiJ9XSwiaWF0IjoxNzYxNzE1MDUxLCJleHAiOjE3NjE3MTU2NTF9.vJ4vhgQZdKlbMdijvLJA5McfRmooX-1u9e3r5mvMheZi5UweF14k-zH-8kjLahg2m8comBr4GKrKLy9cqEbN5w' \
+    --header 'Content-Type: application/json' \
+    --data '{
+    "text": "This artwork is stunning!"
+    }'
+  ```
     * Paginación para visualizar comentarios.
+  ```
+  curl --location 'http://localhost:8080/publication/1/comment'
+  ```
+mas tests en la coleccion de postman*
   
 ---
 
@@ -119,7 +172,6 @@ El sistema implementa un `GlobalExceptionHandler` con @ControllerAdvice que gest
 
 * `ResourceNotFoundException`
 * `UnauthorizedException`
-* `DuplicateResourceException`
 * `ValidationException`
 
 ---

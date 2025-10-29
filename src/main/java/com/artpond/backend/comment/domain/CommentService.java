@@ -37,11 +37,18 @@ public class CommentService {
         commentResponseDto.setId(comment.getId());
         commentResponseDto.setText(comment.getContent());
         commentResponseDto.setAuthor(modelMapper.map(author, UserResponseDto.class));
-        commentResponseDto.setPublicationId(publicationId);
+        commentResponseDto.setCreatedAt(comment.getCreatedDate());
         return commentResponseDto;
     }
 
-    public List<Comment> getComments(Long publicationId) {
-        return commentRepository.findByPublicationId(publicationId);
+    public List<CommentResponseDto> getComments(Long publicationId) {
+        return commentRepository.findByPublicationId(publicationId).stream().map(comment -> {
+            CommentResponseDto commentResponseDto = new CommentResponseDto();
+            commentResponseDto.setId(comment.getId());
+            commentResponseDto.setText(comment.getContent());
+            commentResponseDto.setAuthor(modelMapper.map(comment.getUser(), UserResponseDto.class));
+            commentResponseDto.setCreatedAt(comment.getCreatedDate());
+            return commentResponseDto;
+        }).toList();
     }
 }

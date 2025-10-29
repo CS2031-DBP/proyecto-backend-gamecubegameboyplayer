@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/publication")
@@ -57,6 +58,18 @@ public class PublicationController {
         return ResponseEntity.ok(publicationService.getPublicationsByTag(tagName, pageable));
     }
     ///  UPDATE (TAGS DESCRIPTION?)
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ARTIST')")
+    public ResponseEntity<PublicationResponseDto> patchPublication(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> updates) {
+        return ResponseEntity.ok(publicationService.patchPublication(id, updates));
+    }
 
     ///  DELETE
+    @DeleteMapping
+    public ResponseEntity<?> deletePublicationById(@PathVariable Long id) {
+        publicationService.deletePublicationById(id);
+        return ResponseEntity.noContent().build();
+    }
 }

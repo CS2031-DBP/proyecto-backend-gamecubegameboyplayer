@@ -18,7 +18,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +37,24 @@ public class PublicationService {
         return publicationRepository.findById(id).orElseThrow();
     }
 
+    private PublicationResponseDto toDto(Publication pub) {
+        PublicationResponseDto dto = new PublicationResponseDto();
+        dto.setId(pub.getId());
+        dto.setDescription(pub.getDescription());
+        dto.setAuthor(modelMapper.map(pub.getAuthor(), UserResponseDto.class));
+        dto.setImages(
+                pub.getImages().stream()
+                        .map(img -> modelMapper.map(img, ImageResponseDto.class))
+                        .collect(toList())
+        );
+        dto.setTags(
+                pub.getTags().stream()
+                        .map(Tag::getName)
+                        .collect(toList())
+        );
+        return dto;
+    }
+
     public PublicationResponseDto createPublication(PublicationRequestDto dto, String username) {
             User user = userRepository.findByUsername(username).orElseThrow();
             Publication publication = new Publication();
@@ -46,7 +67,7 @@ public class PublicationService {
                                 newTag.setName(tagName);
                                 return tagRepository.save(newTag);
                             })
-                    ).collect(Collectors.toList());
+                    ).collect(toList());
             publication.setTags(tagEntities);
             List<Image> imageEntities = dto.getImages().stream()
                 .map(imgDto -> {
@@ -55,55 +76,61 @@ public class PublicationService {
                     img.setPublication(publication);
                     return img;
                 })
-                .collect(Collectors.toList());
+                .collect(toList());
             publication.setImages(imageEntities);
 
             return modelMapper.map(publicationRepository.save(publication), PublicationResponseDto.class);
     }
 
     public Page<PublicationResponseDto> getAllPublications(Pageable pageable) {
-        return publicationRepository.findAll(pageable).map(pub ->
-        {
-            PublicationResponseDto dto = new PublicationResponseDto();
-            dto.setId(pub.getId());
-            dto.setDescription(pub.getDescription());
-            dto.setAuthor(modelMapper.map(pub.getAuthor(), UserResponseDto.class));
-            dto.setImages(pub.getImages().stream().map(img -> modelMapper.map(img, ImageResponseDto.class)).collect(Collectors.toList()));
-            dto.setTags(pub.getTags().stream().map(Tag::getName).collect(Collectors.toList()));
-            return dto;
-        });
+        return publicationRepository.findAll(pageable).map(this::toDto);
     }
 
     public Page<PublicationResponseDto> getPublicationsByTag(String tagName, Pageable pageable) {
         Tag tag = tagRepository.findByName(tagName)
                 .orElseThrow(() -> new RuntimeException("Tag not found"));
 
-        return publicationRepository.findByTagsContaining(tag, pageable).map(pub ->
-        {
-            PublicationResponseDto dto = new PublicationResponseDto();
-            dto.setId(pub.getId());
-            dto.setDescription(pub.getDescription());
-            dto.setAuthor(modelMapper.map(pub.getAuthor(), UserResponseDto.class));
-            dto.setImages(pub.getImages().stream().map(img -> modelMapper.map(img, ImageResponseDto.class)).collect(Collectors.toList()));
-            dto.setTags(pub.getTags().stream().map(Tag::getName).collect(Collectors.toList()));
-            return dto;
-        });
+        return publicationRepository.findByTagsContaining(tag, pageable).map(this::toDto);
     }
 
     public PublicationResponseDto getPublicationById(Long id) {
-        Publication publication = publicationRepository.findById(id).orElseThrow();
-        PublicationResponseDto dto = new PublicationResponseDto();
-        dto.setId(publication.getId());
-        dto.setDescription(publication.getDescription());
-        dto.setAuthor(modelMapper.map(publication.getAuthor(), UserResponseDto.class));
-        dto.setImages(publication.getImages().stream().map(img -> modelMapper.map(img, ImageResponseDto.class)).collect(Collectors.toList()));
-        dto.setTags(publication.getTags().stream().map(Tag::getName).collect(Collectors.toList()));
-        return dto;
+        Publication publication = publicationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Publication not found"));
+        return toDto(publication);
     }
 
     public PublicationResponseDto saveImages(Long id, List<Image> images) {
         Publication publication = publicationRepository.findById(id).orElseThrow(() -> new RuntimeException("Publication not found"));
         publication.setImages(images);
         return modelMapper.map(publicationRepository.save(publication), PublicationResponseDto.class);
+    }
+
+    public PublicationResponseDto patchPublication(Long id, Map<String, Object> updates) {
+        Publication pub = publicationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Publication not found"));
+        updates.forEach((key, value) -> {
+            switch (key) {
+                case "description" -> pub.setDescription((String) value);
+                case "tags" -> {
+                        List<String> tagNames = ((List<?>) value).stream()
+                                .map(Object::toString).toList();
+                        pub.setTags(tagNames.stream()
+                                .map(tagName -> tagRepository.findByName(tagName)
+                                    .orElseGet(() -> {
+                                            Tag newTag = new Tag();
+                                            newTag.setName(tagName);
+                                            return tagRepository.save(newTag);
+                                            }))
+                                            .toList());
+                }
+            }
+        });
+
+        return toDto(publicationRepository.save(pub));
+    }
+
+    public Void deletePublicationById(Long id) {
+        publicationRepository.deleteById(id);
+        return null;
     }
 }

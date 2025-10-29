@@ -1,97 +1,11 @@
 {
 	"info": {
-		"_postman_id": "4a8c7da4-2e7f-4c1f-bb22-0e4619996d16",
-		"name": "Artpond Collection",
+		"_postman_id": "f03b76f3-3433-4a87-a282-55cde124394d",
+		"name": "Lab-03",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "47767520",
-		"_collection_link": "https://artpond-testing.postman.co/workspace/artpond-testing-Workspace~7c98fef8-c760-4bd3-b605-73561469d967/collection/47767520-4a8c7da4-2e7f-4c1f-bb22-0e4619996d16?action=share&source=collection_link&creator=47767520"
+		"_exporter_id": "47767506"
 	},
 	"item": [
-		{
-			"name": "publication",
-			"item": [
-				{
-					"name": "Get publication",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwt_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{baseURL}}/publication/1",
-							"host": [
-								"{{baseURL}}"
-							],
-							"path": [
-								"publication",
-								"1"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create publication",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{jwt_token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{jwt_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "description",
-									"value": "my stuff",
-									"description": "description",
-									"type": "text"
-								},
-								{
-									"key": "contentWarning",
-									"value": "false",
-									"description": "true if explicit material",
-									"type": "text"
-								},
-								{
-									"key": "tags",
-									"value": "art, good",
-									"description": "tags",
-									"type": "text"
-								}
-							]
-						},
-						"url": {
-							"raw": "{{baseURL}}/publication",
-							"host": [
-								"{{baseURL}}"
-							],
-							"path": [
-								"publication"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
 		{
 			"name": "register",
 			"event": [
@@ -122,7 +36,8 @@
 							""
 						],
 						"type": "text/javascript",
-						"packages": {}
+						"packages": {},
+						"requests": {}
 					}
 				}
 			],
@@ -139,10 +54,12 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseURL}}/auth/register",
+					"raw": "http://localhost:8080/auth/register",
+					"protocol": "http",
 					"host": [
-						"{{baseURL}}"
+						"localhost"
 					],
+					"port": "8080",
 					"path": [
 						"auth",
 						"register"
@@ -174,7 +91,8 @@
 							"}"
 						],
 						"type": "text/javascript",
-						"packages": {}
+						"packages": {},
+						"requests": {}
 					}
 				}
 			],
@@ -191,10 +109,12 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseURL}}/auth/login",
+					"raw": "http://localhost:8080/auth/login",
+					"protocol": "http",
 					"host": [
-						"{{baseURL}}"
+						"localhost"
 					],
+					"port": "8080",
 					"path": [
 						"auth",
 						"login"
@@ -215,10 +135,12 @@
 					}
 				],
 				"url": {
-					"raw": "{{baseURL}}/user/{{user_id}}",
+					"raw": "http://localhost:8080/user/{{user_id}}",
+					"protocol": "http",
 					"host": [
-						"{{baseURL}}"
+						"localhost"
 					],
+					"port": "8080",
 					"path": [
 						"user",
 						"{{user_id}}"
@@ -226,20 +148,203 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "create publication",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"description\": \"My first art post!\",\r\n  \"tags\": [\"digital\", \"portrait\"],\r\n  \"images\": [\r\n    {\"url\": \"https://example.com/myart.png\"}\r\n  ]\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/publication",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"publication"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get publications",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/publication?page=0&size=5",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"publication"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "0"
+						},
+						{
+							"key": "size",
+							"value": "5"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get publication",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/publication/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"publication",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create comment",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"text\": \"This artwork is stunning!\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/publication/1/comment",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"publication",
+						"1",
+						"comment"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "search by tag",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/publication/tag/digital?page=0&size=5",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"publication",
+						"tag",
+						"digital"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "0"
+						},
+						{
+							"key": "size",
+							"value": "5"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
 		}
 	],
 	"variable": [
 		{
-			"key": "baseURL",
-			"value": "http://localhost:8080",
-			"type": "default"
-		},
-		{
-			"key": "baseURL",
+			"key": "jwt_token",
 			"value": ""
 		},
 		{
-			"key": "jwt_token",
+			"key": "user_id",
 			"value": ""
 		}
 	]
