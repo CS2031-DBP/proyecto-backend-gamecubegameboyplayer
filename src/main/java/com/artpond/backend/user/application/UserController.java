@@ -1,8 +1,6 @@
 package com.artpond.backend.user.application;
 
 import com.artpond.backend.user.domain.UserService;
-import com.artpond.backend.user.dto.PublicUserDto;
-
 import com.artpond.backend.user.dto.UserResponseDto;
 import lombok.RequiredArgsConstructor;
 

@@ -14,7 +14,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import java.security.Key;
 import java.util.Date;
 import java.util.Optional;
 import java.util.function.Function;
@@ -31,7 +30,7 @@ public class JwtService {
 
     private final UserService userService;
 
-    private Key getSignInKey() {
+    private SecretKey getSignInKey() {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
@@ -53,10 +52,10 @@ public class JwtService {
     public Optional<Claims> extractAllClaims(String token) {
         try {
             Claims claims = Jwts.parser()
-                    .setSigningKey(getSignInKey())
+                    .verifyWith(getSignInKey())
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseSignedClaims(token)
+                    .getPayload();
             return Optional.of(claims);
         } catch (JwtException e) {
             return Optional.empty();

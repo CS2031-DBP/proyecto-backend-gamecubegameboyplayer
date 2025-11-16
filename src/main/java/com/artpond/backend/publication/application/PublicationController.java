@@ -1,7 +1,6 @@
 package com.artpond.backend.publication.application;
 
 import com.artpond.backend.image.domain.Image;
-import com.artpond.backend.publication.domain.Publication;
 import com.artpond.backend.publication.domain.PublicationService;
 import com.artpond.backend.publication.dto.PublicationRequestDto;
 import com.artpond.backend.publication.dto.PublicationResponseDto;
@@ -27,7 +26,7 @@ public class PublicationController {
     private final PublicationService publicationService;
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ARTIST')")
+    @PreAuthorize("hasRole('USER') or hasRole('ARTIST')")
     public ResponseEntity<PublicationResponseDto> createPublication(@Valid @RequestBody PublicationRequestDto dto,
                                                   @AuthenticationPrincipal User userDetails) {
         PublicationResponseDto createdPublication =  publicationService.createPublication(dto, userDetails.getUsername());
@@ -59,7 +58,7 @@ public class PublicationController {
     }
     ///  UPDATE (TAGS DESCRIPTION?)
     @PatchMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ARTIST')")
+    @PreAuthorize("hasRole('USER') or hasRole('ARTIST')")
     public ResponseEntity<PublicationResponseDto> patchPublication(
             @PathVariable Long id,
             @RequestBody Map<String, Object> updates) {
@@ -68,7 +67,7 @@ public class PublicationController {
 
     ///  DELETE
     @DeleteMapping
-    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ARTIST')")
+    @PreAuthorize("hasRole('USER') or hasRole('ARTIST')")
     public ResponseEntity<?> deletePublicationById(@PathVariable Long id,
                                                    @AuthenticationPrincipal User userDetails) {
         publicationService.deletePublicationById(id, userDetails.getUserId());

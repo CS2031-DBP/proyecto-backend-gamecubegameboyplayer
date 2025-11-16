@@ -1,6 +1,5 @@
 package com.artpond.backend.comment.application;
 
-import com.artpond.backend.comment.domain.Comment;
 import com.artpond.backend.comment.domain.CommentService;
 import com.artpond.backend.comment.dto.CommentRequestDto;
 import com.artpond.backend.comment.dto.CommentResponseDto;
@@ -21,7 +20,7 @@ public class CommentController {
     private final CommentService commentService;
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ARTIST')")
+    @PreAuthorize("hasRole('USER') or hasRole('ARTIST')")
     public ResponseEntity<CommentResponseDto> addComment(@PathVariable Long publicationId,
                                                          @RequestBody CommentRequestDto dto,
                                                          @AuthenticationPrincipal User user) {
@@ -35,7 +34,7 @@ public class CommentController {
     }
 
     @DeleteMapping
-    @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ARTIST')")
+    @PreAuthorize("hasRole('USER') or hasRole('ARTIST')")
     public ResponseEntity<Void> deleteComment(@PathVariable Long commentId,
                                               @AuthenticationPrincipal User user) {
         commentService.deleteComment(commentId, user.getUserId());

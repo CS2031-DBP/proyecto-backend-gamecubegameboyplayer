@@ -4,6 +4,7 @@ import com.artpond.backend.authentication.dto.JwtAuthLoginDto;
 import com.artpond.backend.authentication.dto.LoginResponseDto;
 import com.artpond.backend.authentication.event.UserRegisteredEvent;
 import com.artpond.backend.jwt.domain.JwtService;
+import com.artpond.backend.user.domain.User;
 import com.artpond.backend.user.domain.UserService;
 import com.artpond.backend.user.dto.RegisterUserDto;
 import com.artpond.backend.user.dto.UserResponseDto;
@@ -13,7 +14,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -32,9 +32,9 @@ public class AuthenticationService {
         final UserResponseDto createdUser = userService.registerUser(dto, passwordEncoder);
         //userService.sendVerificationEmail(createdUser);
 
-        final UserDetails userDetails = userService.loadUserByUsername(createdUser.getUsername());
+        final User user = userService.loadUserByUsername(createdUser.getUsername());
 
-        final String token = jwtService.generateToken(userDetails);
+        final String token = jwtService.generateToken(user);
 
         LoginResponseDto response = modelMapper.map(createdUser, LoginResponseDto.class);
         response.setToken(token);
@@ -44,25 +44,10 @@ public class AuthenticationService {
     }
 
     public LoginResponseDto jwtLogin(final JwtAuthLoginDto dto) {
-        /*
-        final User user = userService.findByEmail(dto.getEmail());
-
-        if (user.getPassword() == null || !passwordEncoder.matches(dto.getPassword(), user.getPassword()))
-            return null;
-
-        final String token = jwtService.generateToken(modelMapper.map(user, UserDto.class));
-        return new LoginResponseDto(
-                token,
-                user.getUserId(),
-                user.getEmail(),
-                user.getRole().name()
-        );
-
-         */
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword())
         );
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        User userDetails = (User) authentication.getPrincipal();
         String token = jwtService.generateToken(userDetails);
 
         LoginResponseDto response = modelMapper.map(userDetails, LoginResponseDto.class);

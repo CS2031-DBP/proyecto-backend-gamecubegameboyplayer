@@ -57,7 +57,12 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/publication/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/publication").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/publication/**").permitAll()
+                        
+                        .requestMatchers(HttpMethod.POST, "/publication").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/publication/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/publication/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
