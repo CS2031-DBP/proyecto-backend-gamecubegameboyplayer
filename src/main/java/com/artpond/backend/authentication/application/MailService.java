@@ -48,7 +48,7 @@ public class MailService {
         final Context context = new Context();
         context.setVariable("userName", username);
         context.setVariable("artpondRules", frontendUrl + "/terms/rules");
-        context.setVariable("", frontendUrl + "/users/" + id);
+        context.setVariable("generatedUrl", frontendUrl + "/users/" + id);
 
         sendHTMLMail(send, "Artpond te da la bienvenida", "welcome", context);
     }
