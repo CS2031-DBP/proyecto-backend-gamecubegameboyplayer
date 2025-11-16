@@ -9,7 +9,6 @@
 
 * Fabian Arana Espinoza (100%)
 * Angel Mattos (100%)
-* Natalia Ccusi
 
 ---
 
