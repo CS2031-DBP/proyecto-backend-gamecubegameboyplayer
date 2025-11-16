@@ -30,7 +30,7 @@ public class AuthenticationService {
 
     public LoginResponseDto jwtRegister(final RegisterUserDto dto) {
         final UserResponseDto createdUser = userService.registerUser(dto, passwordEncoder);
-        // userService.sendVerificationEmail(createdUser);
+        //userService.sendVerificationEmail(createdUser);
 
         final UserDetails userDetails = userService.loadUserByUsername(createdUser.getUsername());
 
@@ -39,7 +39,7 @@ public class AuthenticationService {
         LoginResponseDto response = modelMapper.map(createdUser, LoginResponseDto.class);
         response.setToken(token);
 
-        publisher.publishEvent(new UserRegisteredEvent(createdUser.getEmail(), createdUser.getUsername()));
+        publisher.publishEvent(new UserRegisteredEvent(createdUser.getId(), createdUser.getEmail(), createdUser.getUsername()));
         return response;
     }
 

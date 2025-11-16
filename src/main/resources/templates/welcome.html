@@ -1,0 +1,64 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Artpond te da la bienvenida</title>
+  </head>
+  <body
+    style="
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #cfd6e8; padding: 40px;
+    "
+  >
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td align="center">
+          <table
+            width="700"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="background-color: #ffffff; box-shadow: 5px 5px darkgray; padding: 20px"
+          >
+            <tr>
+              <td align="center" style="padding-bottom: 10px">
+                <h1 style="color: #333333; margin: 0">
+                  ¡Te damos la bienvenida,
+                  <span style="color: #1868bd" th:text="${userName}"></span>!
+                </h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="color: #2b2b2b; font-size: 16px; line-height: 1.6">
+                <p>
+                  Gracias por registrarte en <strong>Artpond</strong>.
+                  Este será tu nuevo espacio para compartir y descubrir arte.
+                  Esperamos que disfrutes mucho tu estancia. 
+                </p>
+                <p>
+                  En nuestra plataforma, podrás explorar, compartir ó construir tu propio espacio visual.
+                  La creatividad no tiene límites!
+                </p>
+                <p style="margin-top: 30px">
+                    Comienza viendo tu perfil <a th:href="${generatedUrl}">aquí</a>,
+                    o revisa la pagina principal.
+                </p> 
+                <hr
+                  style="
+                    margin: 8px 0;
+                    border: none;
+                    border-top: 1px solid #ddd;
+                  "
+                />
+                <p style="font-size: 14px; color: #9c9c9c; text-align: center">
+                  © 2025 artpond.ink & Artpond Staff<br>
+                  Al subir contenido a Artpond, estás sujeto a cumplir las <a th:href="${artpondRules}">reglas preestablecidas</a> del sitio.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
