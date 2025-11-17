@@ -8,10 +8,13 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Data;
 
 @Entity
-@Table(name = "places")
+@Table(name = "places", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"osmId", "osmType"})
+})
 @Data
 public class Place {
     @Id
@@ -20,6 +23,9 @@ public class Place {
 
     @Column(nullable = false, unique = true)
     private Long osmId; // la id del lugar segun la API de OpenStreetMap
+
+    @Column(nullable = false)
+    private String osmType;
 
     @Column(nullable = false)
     private String name;

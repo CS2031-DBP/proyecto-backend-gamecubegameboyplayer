@@ -1,10 +1,11 @@
 package com.artpond.backend.user.dto;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
-public class UserResponseDto {
-    private Long id;
-    private String username;
+@EqualsAndHashCode(callSuper = true)
+public class UserResponseDto extends PublicUserDto {
     private String email;
+    private String description;
 }

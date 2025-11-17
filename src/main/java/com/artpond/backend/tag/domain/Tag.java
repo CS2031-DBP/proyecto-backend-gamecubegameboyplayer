@@ -12,10 +12,10 @@ import java.util.List;
 @Table(name = "tags")
 public class Tag {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     private String name;
 
     @ManyToMany(mappedBy = "tags")

@@ -38,7 +38,7 @@ public class SecurityConfig {
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider (userDetailsService);
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
@@ -49,7 +49,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider authenticationProvider) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(
@@ -57,12 +57,8 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/publication").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/publication/**").permitAll()
-                        
-                        .requestMatchers(HttpMethod.POST, "/publication").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/publication/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/publication/**").authenticated()
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/publication/*").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
@@ -70,3 +66,6 @@ public class SecurityConfig {
                 .build();
     }
 }
+
+
+

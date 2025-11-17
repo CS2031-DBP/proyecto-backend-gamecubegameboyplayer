@@ -1,6 +1,5 @@
 package com.artpond.backend.jwt.domain;
 
-import com.artpond.backend.user.domain.User;
 import com.artpond.backend.user.domain.UserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -8,8 +7,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -58,24 +55,6 @@ public class JwtService {
                     .getPayload();
             return Optional.of(claims);
         } catch (JwtException e) {
-            return Optional.empty();
-        }
-    }
-
-    public Optional<Authentication> getAuthentication(String jwtToken, Claims claims) {
-        try {
-            Long id = Long.valueOf(extractClaim(claims, Claims::getSubject));
-            User user = userService.getUserById(id);
-            if (user == null) {
-                return Optional.empty();
-            }
-            Authentication authentication = new UsernamePasswordAuthenticationToken(
-                    user,
-                    jwtToken,
-                    user.getAuthorities()
-            );
-            return Optional.of(authentication);
-        } catch (Exception e) {
             return Optional.empty();
         }
     }

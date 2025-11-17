@@ -1,7 +1,6 @@
 package com.artpond.backend.comment.dto;
 
-import com.artpond.backend.publication.dto.PublicationResponseDto;
-import com.artpond.backend.user.dto.UserResponseDto;
+import com.artpond.backend.user.dto.PublicUserDto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -10,6 +9,6 @@ import java.time.LocalDateTime;
 public class CommentResponseDto {
     private Long id;
     private String text;
-    private UserResponseDto author;
+    private PublicUserDto author;
     private LocalDateTime createdAt;
 }

@@ -20,7 +20,7 @@ public class CommentController {
     private final CommentService commentService;
 
     @PostMapping
-    @PreAuthorize("hasRole('USER') or hasRole('ARTIST')")
+    @PreAuthorize("hasRole('USER') or hasRole('ARTIST') or hasRole('ADMIN')")
     public ResponseEntity<CommentResponseDto> addComment(@PathVariable Long publicationId,
                                                          @RequestBody CommentRequestDto dto,
                                                          @AuthenticationPrincipal User user) {
@@ -34,7 +34,7 @@ public class CommentController {
     }
 
     @DeleteMapping
-    @PreAuthorize("hasRole('USER') or hasRole('ARTIST')")
+    @PreAuthorize("hasRole('USER') or hasRole('ARTIST') or hasRole('ADMIN')")
     public ResponseEntity<Void> deleteComment(@PathVariable Long commentId,
                                               @AuthenticationPrincipal User user) {
         commentService.deleteComment(commentId, user.getUserId());

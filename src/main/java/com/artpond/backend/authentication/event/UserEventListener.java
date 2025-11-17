@@ -10,12 +10,18 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class UserRegisteredEventListener {
+public class UserEventListener {
     private final MailService mailService;
 
     @Async
     @EventListener
     public void handleUserRegistered(UserRegisteredEvent event) throws MessagingException {
         mailService.welcomeMail(event.getEmail(), event.getUsername(), event.getId());
+    }
+
+    @Async
+    @EventListener
+    public void handleUserModified(UserUpdatedEvent event) throws MessagingException {
+        mailService.userChangedMail(event.getEmail(), event.getUsername());
     }
 }

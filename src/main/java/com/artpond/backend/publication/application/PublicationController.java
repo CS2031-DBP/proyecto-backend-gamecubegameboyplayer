@@ -1,7 +1,7 @@
 package com.artpond.backend.publication.application;
 
-import com.artpond.backend.image.domain.Image;
 import com.artpond.backend.publication.domain.PublicationService;
+import com.artpond.backend.publication.dto.PublicationCreatedDto;
 import com.artpond.backend.publication.dto.PublicationRequestDto;
 import com.artpond.backend.publication.dto.PublicationResponseDto;
 import com.artpond.backend.user.domain.User;
@@ -15,7 +15,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -26,48 +25,42 @@ public class PublicationController {
     private final PublicationService publicationService;
 
     @PostMapping
-    @PreAuthorize("hasRole('USER') or hasRole('ARTIST')")
-    public ResponseEntity<PublicationResponseDto> createPublication(@Valid @RequestBody PublicationRequestDto dto,
+    @PreAuthorize("hasRole('USER') or hasRole('ARTIST') or hasRole('ADMIN')")
+    public ResponseEntity<PublicationCreatedDto> createPublication(@Valid @RequestBody PublicationRequestDto dto,
                                                   @AuthenticationPrincipal User userDetails) {
-        PublicationResponseDto createdPublication =  publicationService.createPublication(dto, userDetails.getUsername());
+        PublicationCreatedDto createdPublication =  publicationService.createPublication(dto, userDetails.getUsername());
         return ResponseEntity.created(URI.create("/publication/" + createdPublication.getId())).body(createdPublication);
     } /// hacer publication
 
     @GetMapping
-    public ResponseEntity<Page<PublicationResponseDto>> getAllPosts(Pageable pageable) {
-
-        return ResponseEntity.ok(publicationService.getAllPublications(pageable));
+    public ResponseEntity<Page<PublicationResponseDto>> getAllPosts(Pageable pageable, @AuthenticationPrincipal User userDetails) {
+        return ResponseEntity.ok(publicationService.getAllPublications(pageable, userDetails));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PublicationResponseDto> getPublication(@PathVariable Long id) {
-        return ResponseEntity.ok(publicationService.getPublicationById(id));
-    }
-
-    @PostMapping("/{id}/images")
-    public ResponseEntity<PublicationResponseDto> addImages(@PathVariable Long id,
-                                       @RequestBody List<Image> images) {
-        return ResponseEntity.ok(publicationService.saveImages(id, images));
+    public ResponseEntity<PublicationResponseDto> getPublication(@PathVariable Long id, @AuthenticationPrincipal User userDetails) {
+        return ResponseEntity.ok(publicationService.getPublicationById(id, userDetails));
     }
 
     ///  GET BY TAGS -> ALL
     @GetMapping("/tag/{tagName}")
     public ResponseEntity<Page<PublicationResponseDto>> getPublicationsByTag(@PathVariable String tagName,
-                                                                             Pageable pageable) {
-        return ResponseEntity.ok(publicationService.getPublicationsByTag(tagName, pageable));
+                                                                             Pageable pageable, @AuthenticationPrincipal User userDetails) {
+        return ResponseEntity.ok(publicationService.getPublicationsByTag(tagName, pageable, userDetails));
     }
     ///  UPDATE (TAGS DESCRIPTION?)
     @PatchMapping("/{id}")
-    @PreAuthorize("hasRole('USER') or hasRole('ARTIST')")
+    @PreAuthorize("hasRole('USER') or hasRole('ARTIST') or hasRole('ADMIN')")
     public ResponseEntity<PublicationResponseDto> patchPublication(
             @PathVariable Long id,
-            @RequestBody Map<String, Object> updates) {
-        return ResponseEntity.ok(publicationService.patchPublication(id, updates));
+            @RequestBody Map<String, Object> updates,
+            @AuthenticationPrincipal User userDetails) {
+        return ResponseEntity.ok(publicationService.patchPublication(id, updates, userDetails.getUserId()));
     }
 
     ///  DELETE
     @DeleteMapping
-    @PreAuthorize("hasRole('USER') or hasRole('ARTIST')")
+    @PreAuthorize("hasRole('USER') or hasRole('ARTIST') or hasRole('ADMIN')")
     public ResponseEntity<?> deletePublicationById(@PathVariable Long id,
                                                    @AuthenticationPrincipal User userDetails) {
         publicationService.deletePublicationById(id, userDetails.getUserId());

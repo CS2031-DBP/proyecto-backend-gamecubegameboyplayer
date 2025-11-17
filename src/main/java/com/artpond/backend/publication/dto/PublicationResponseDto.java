@@ -1,21 +1,17 @@
 package com.artpond.backend.publication.dto;
 
-import com.artpond.backend.image.domain.Image;
 import com.artpond.backend.image.dto.ImageResponseDto;
-import com.artpond.backend.publication.domain.Publication;
-import com.artpond.backend.tag.domain.Tag;
-import com.artpond.backend.user.domain.User;
-import com.artpond.backend.user.dto.UserResponseDto;
+import com.artpond.backend.tag.dto.TagsResponseDto;
+import com.artpond.backend.user.dto.PublicUserDto;
 import lombok.Data;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 public class PublicationResponseDto {
     private Long id;
     private String description;
-    private UserResponseDto author;
+    private PublicUserDto author;
     private List<ImageResponseDto> images;
-    private List<String> tags;
+    private List<TagsResponseDto> tags;
 }

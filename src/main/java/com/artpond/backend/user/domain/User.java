@@ -35,6 +35,12 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = true)
+    private String description;
+
+    @Column(nullable = false)
+    private Boolean showExplicit = false;
+
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Publication> publications = new ArrayList<>();
@@ -50,10 +56,5 @@ public class User implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
-        /*
-        return User.getRoles.stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
-                .collect(Collectors.toList());
-        */
     }
 }

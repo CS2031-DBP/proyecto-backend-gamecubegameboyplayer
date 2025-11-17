@@ -3,10 +3,7 @@ package com.artpond.backend.authentication.application;
 import lombok.RequiredArgsConstructor;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -51,5 +48,15 @@ public class MailService {
         context.setVariable("generatedUrl", frontendUrl + "/users/" + id);
 
         sendHTMLMail(send, "Artpond te da la bienvenida", "welcome", context);
+    }
+
+    @Async
+    public void userChangedMail(String send, String username) throws MessagingException {
+        final Context context = new Context();
+        context.setVariable("userName", username);
+        context.setVariable("artpondRules", frontendUrl + "/terms/rules");
+        context.setVariable("supportUrl", frontendUrl + "/terms/support");
+
+        sendHTMLMail(send, "Artpond: Aviso de cambio de correo electronico", "emailchange", context);
     }
 }

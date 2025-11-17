@@ -5,15 +5,12 @@ import com.artpond.backend.comment.dto.CommentResponseDto;
 import com.artpond.backend.comment.infrastructure.CommentRepository;
 import com.artpond.backend.publication.domain.Publication;
 import com.artpond.backend.publication.domain.PublicationService;
-import com.artpond.backend.publication.dto.PublicationResponseDto;
 import com.artpond.backend.user.domain.User;
 import com.artpond.backend.user.domain.UserService;
-import com.artpond.backend.user.dto.UserResponseDto;
+import com.artpond.backend.user.dto.PublicUserDto;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-
 import java.util.List;
 
 @Service
@@ -37,7 +34,7 @@ public class CommentService {
         CommentResponseDto commentResponseDto = new CommentResponseDto();
         commentResponseDto.setId(comment.getId());
         commentResponseDto.setText(comment.getContent());
-        commentResponseDto.setAuthor(modelMapper.map(author, UserResponseDto.class));
+        commentResponseDto.setAuthor(modelMapper.map(author, PublicUserDto.class));
         commentResponseDto.setCreatedAt(comment.getCreatedDate());
         return commentResponseDto;
     }
@@ -47,7 +44,7 @@ public class CommentService {
             CommentResponseDto commentResponseDto = new CommentResponseDto();
             commentResponseDto.setId(comment.getId());
             commentResponseDto.setText(comment.getContent());
-            commentResponseDto.setAuthor(modelMapper.map(comment.getUser(), UserResponseDto.class));
+            commentResponseDto.setAuthor(modelMapper.map(comment.getUser(), PublicUserDto.class));
             commentResponseDto.setCreatedAt(comment.getCreatedDate());
             return commentResponseDto;
         }).toList();

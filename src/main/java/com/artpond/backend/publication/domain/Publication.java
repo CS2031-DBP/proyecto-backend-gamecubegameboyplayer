@@ -38,6 +38,9 @@ public class Publication {
     private Boolean contentWarning = false;
 
     @Column(nullable = false)
+    private Boolean machineGenerated = false;
+
+    @Column(nullable = false)
     private Boolean moderated = false;
 
     @CreationTimestamp

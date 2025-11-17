@@ -6,10 +6,8 @@ import lombok.Data;
 public class RegisterUserDto {
     @NotBlank
     private String email;
-
     @NotBlank
     private String password;
-
     @NotBlank
     private String username;
 

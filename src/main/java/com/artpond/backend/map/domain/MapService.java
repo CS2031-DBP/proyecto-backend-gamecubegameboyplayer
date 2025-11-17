@@ -10,13 +10,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.artpond.backend.definitions.exception.NotFoundException;
 import com.artpond.backend.map.dto.JsonPlaceDataDto;
 import com.artpond.backend.map.dto.PlaceDataDto;
 import com.artpond.backend.map.dto.PlaceMapSummaryDto;
@@ -49,35 +52,36 @@ public class MapService {
 
     @Transactional
     public Place findOrCreatePlace(Long osmId, String osmType) {
-        return mapRepository.findByOsmId(osmId)
-            .orElseGet(() -> {
-                PlaceDataDto trustedData = fetchPlaceDetailsFromNominatim(osmId, osmType);
-                
-                Point coordinates = geometryFactory.createPoint(
-                    new Coordinate(trustedData.getLongitude(), trustedData.getLatitude())
-                );
-                coordinates.setSRID(4326);
+        return mapRepository.findByOsmIdAndOsmType(osmId, osmType)
+                .orElseGet(() -> {
+                    PlaceDataDto trustedData = fetchPlaceDetailsFromNominatim(osmId, osmType);
 
-                Place newPlace = new Place();
-                newPlace.setOsmId(trustedData.getOsmId());
-                newPlace.setName(trustedData.getName());
-                newPlace.setAddress(trustedData.getAddress());
-                newPlace.setCoordinates(coordinates);
-                newPlace.setPostCount(0L);
+                    Point coordinates = geometryFactory.createPoint(
+                            new Coordinate(trustedData.getLongitude(), trustedData.getLatitude()));
+                    coordinates.setSRID(4326);
 
-                return mapRepository.save(newPlace);
-            });
+                    Place newPlace = new Place();
+                    newPlace.setOsmId(trustedData.getOsmId());
+                    newPlace.setOsmType(osmType);
+                    newPlace.setName(trustedData.getName());
+                    newPlace.setAddress(trustedData.getAddress());
+                    newPlace.setCoordinates(coordinates);
+                    newPlace.setPostCount(0L);
+
+                    return mapRepository.save(newPlace);
+                });
     }
 
     @Transactional
     public void updatePostCount(Long placeId) {
-        if (placeId == null) return;
-        
+        if (placeId == null)
+            return;
+
         Long activePosts = publicationRepository.countByPlace_IdAndModeratedIsFalse(placeId);
-        
+
         Place place = mapRepository.findById(placeId)
-            .orElseThrow(() -> new RuntimeException("Place not found"));
-            
+                .orElseThrow(() -> new NotFoundException("Place not found"));
+
         place.setPostCount(activePosts);
         mapRepository.save(place);
     }
@@ -101,8 +105,8 @@ public class MapService {
                     url,
                     HttpMethod.GET,
                     entity,
-                    new ParameterizedTypeReference<List<JsonPlaceDataDto>>() {}
-            );
+                    new ParameterizedTypeReference<List<JsonPlaceDataDto>>() {
+                    });
             List<JsonPlaceDataDto> jsonPlaces = response.getBody();
             if (jsonPlaces == null) {
                 return List.of();
@@ -112,7 +116,8 @@ public class MapService {
                     .map(this::mapToPlaceDataDto)
                     .toList();
         } catch (Exception e) {
-            throw new RuntimeException("Error al buscar lugares: " + e.getMessage(), e);
+            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Error al buscar lugares: " + e.getMessage());
         }
     }
 
@@ -137,8 +142,8 @@ public class MapService {
                     url,
                     HttpMethod.GET,
                     entity,
-                    new ParameterizedTypeReference<List<JsonPlaceDataDto>>() {}
-            );
+                    new ParameterizedTypeReference<List<JsonPlaceDataDto>>() {
+                    });
         } catch (HttpClientErrorException e) {
             throw new InvalidPlaceException("Place failed to validate: " + e.getMessage());
         } catch (Exception e) {
@@ -157,7 +162,6 @@ public class MapService {
 
     private HttpHeaders createNominatimHeaders() {
         HttpHeaders headers = new HttpHeaders();
-        // Nominatim requiere un User-Agent único.
         headers.set("User-Agent", "Artpond-Backend/1.0 (contact@artpond.com)");
         return headers;
     }
@@ -165,10 +169,8 @@ public class MapService {
     private PlaceDataDto mapToPlaceDataDto(JsonPlaceDataDto nominatimData) {
         PlaceDataDto trustedData = new PlaceDataDto();
         trustedData.setOsmId(nominatimData.getOsmId());
-        
-        // Usar 'name' si existe, si no, usar 'display_name' como fallback
         trustedData.setName(nominatimData.getName() != null ? nominatimData.getName() : nominatimData.getDisplayName());
-        
+
         trustedData.setAddress(nominatimData.getDisplayName());
         trustedData.setLatitude(Double.parseDouble(nominatimData.getLat()));
         trustedData.setLongitude(Double.parseDouble(nominatimData.getLon()));

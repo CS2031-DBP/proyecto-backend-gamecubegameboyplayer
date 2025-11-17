@@ -31,4 +31,5 @@ public interface MapRepository extends JpaRepository<Place, Long> {
     );
 
     Optional<Place> findByOsmId(Long osmId);
+    Optional<Place> findByOsmIdAndOsmType(Long osmId, String osmType);
 }
