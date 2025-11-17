@@ -4,6 +4,7 @@ import com.artpond.backend.definitions.exception.ForbiddenException;
 import com.artpond.backend.definitions.exception.NotFoundException;
 import com.artpond.backend.image.domain.Image;
 import com.artpond.backend.image.dto.ImageResponseDto;
+import com.artpond.backend.map.dto.PlaceDataDto;
 import com.artpond.backend.publication.dto.PublicationCreatedDto;
 import com.artpond.backend.publication.dto.PublicationRequestDto;
 import com.artpond.backend.publication.dto.PublicationResponseDto;
@@ -59,6 +60,7 @@ public class PublicationService {
                 pub.getTags().stream()
                         .map(tg -> modelMapper.map(tg, TagsResponseDto.class))
                         .collect(toList()));
+        dto.setPlace(modelMapper.map(pub.getPlace(), PlaceDataDto.class));
         return dto;
     }
 

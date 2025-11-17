@@ -44,8 +44,8 @@ public class MailService {
     public void welcomeMail(String send, String username, Long id) throws MessagingException {
         final Context context = new Context();
         context.setVariable("userName", username);
-        context.setVariable("artpondRules", frontendUrl + "/terms/rules");
-        context.setVariable("generatedUrl", frontendUrl + "/users/" + id);
+        context.setVariable("frontendUrl", frontendUrl);
+        context.setVariable("generatedId", id);
 
         sendHTMLMail(send, "Artpond te da la bienvenida", "welcome", context);
     }
@@ -54,8 +54,7 @@ public class MailService {
     public void userChangedMail(String send, String username) throws MessagingException {
         final Context context = new Context();
         context.setVariable("userName", username);
-        context.setVariable("artpondRules", frontendUrl + "/terms/rules");
-        context.setVariable("supportUrl", frontendUrl + "/terms/support");
+        context.setVariable("frontendUrl", frontendUrl);
 
         sendHTMLMail(send, "Artpond: Aviso de cambio de correo electronico", "emailchange", context);
     }

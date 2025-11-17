@@ -122,7 +122,14 @@ public class MapService {
     }
 
     private PlaceDataDto fetchPlaceDetailsFromNominatim(Long osmId, String osmType) {
-        String osmIdWithType = osmType.toUpperCase() + osmId;
+        String prefix = switch (osmType.toLowerCase()) {
+            case "node" -> "N";
+            case "way" -> "W";
+            case "relation" -> "R";
+            default -> throw new InvalidPlaceException("Invalid OSM type: " + osmType);
+        };
+
+        String osmIdWithType = prefix + osmId;
 
         String url = UriComponentsBuilder
                 .newInstance()
@@ -147,7 +154,7 @@ public class MapService {
         } catch (HttpClientErrorException e) {
             throw new InvalidPlaceException("Place failed to validate: " + e.getMessage());
         } catch (Exception e) {
-            throw new RuntimeException("Normatim network error: " + e.getMessage(), e);
+            throw new RuntimeException("Nominatim network error: " + e.getMessage(), e);
         }
 
         if (response.getBody() == null) {
