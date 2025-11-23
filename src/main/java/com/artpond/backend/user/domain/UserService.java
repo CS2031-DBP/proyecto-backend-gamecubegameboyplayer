@@ -3,8 +3,7 @@ package com.artpond.backend.user.domain;
 import com.artpond.backend.authentication.event.UserUpdatedEvent;
 import com.artpond.backend.definitions.exception.ForbiddenException;
 import com.artpond.backend.definitions.exception.NotFoundException;
-import com.artpond.backend.publication.domain.Publication;
-import com.artpond.backend.publication.exception.PublicationNotFoundException;
+import com.artpond.backend.image.domain.WatermarkService;
 import com.artpond.backend.user.dto.RegisterUserDto;
 import com.artpond.backend.user.dto.UserResponseDto;
 import com.artpond.backend.user.exception.UserNotFoundException;
@@ -14,6 +13,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.modelmapper.ModelMapper;
@@ -26,6 +26,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +34,7 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
+    private final WatermarkService watermarkService;
 
     @Autowired
     private final ApplicationEventPublisher eventPublisher;
@@ -52,22 +54,30 @@ public class UserService implements UserDetailsService {
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setRole(Role.USER);
 
-        return modelMapper.map( userRepository.saveAndFlush(user), UserResponseDto.class); // change to return user
+        return modelMapper.map(userRepository.saveAndFlush(user), UserResponseDto.class);
     }
 
-    public UserResponseDto patchUser(Long id, Map<String, Object> updates, Long userId) {
+    public UserResponseDto patchUser(Long id, Map<String, Object> updates, MultipartFile watermark, Long userId) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException());
         User reqUser = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException());
         
-        if (reqUser.getUserId() != user.getUserId())
+        if (!reqUser.getUserId().equals(user.getUserId()))
             throw new ForbiddenException("No puedes editar el perfil de otra persona.");
+        
+        if (watermark != null && !watermark.isEmpty()) {
+            try {
+                watermarkService.uploadWatermark(watermark, user.getUsername());
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to upload watermark: " + e.getMessage());
+            }
+        }
             
         updates.forEach((key, value) -> {
             switch (key) {
-                case "description" -> user.setDescription((@Size(min=0, max=256, message="La descripccion no debe de contener más de 256 caracteres.") String) value);
+                case "description" -> user.setDescription((@Size(min=0, max=256, message="La descripcion no debe de contener más de 256 caracteres.") String) value);
                 case "email" -> changeEmail(user, (String) value);
-                case "showExplicit" -> user.setShowExplicit(true);
+                case "showExplicit" -> user.setShowExplicit((Boolean) value);
             }
         });
 
@@ -76,7 +86,7 @@ public class UserService implements UserDetailsService {
 
     private void changeEmail(User user, @Email String newMail) {
         String pastMail = user.getEmail();
-        if (pastMail != newMail) {
+        if (!pastMail.equals(newMail)) {
             user.setEmail(newMail);
             eventPublisher.publishEvent(new UserUpdatedEvent(pastMail, user.getUsername()));
         }
@@ -104,6 +114,8 @@ public class UserService implements UserDetailsService {
     }
 
     public Void deleteUserById (Long id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException());
+        watermarkService.deleteUserWatermark(user.getUsername());
         userRepository.deleteById(id);
         return null;
     }
