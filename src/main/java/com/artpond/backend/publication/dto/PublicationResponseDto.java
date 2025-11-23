@@ -14,9 +14,11 @@ public class PublicationResponseDto {
     private Long id;
     private String description;
     private PublicUserDto author;
+
     private Boolean contentWarning;
     private Boolean machineGenerated;
     private LocalDateTime creationDate;
+    
     private List<ImageResponseDto> images;
     private List<TagsResponseDto> tags;
     private PlaceDataDto place;

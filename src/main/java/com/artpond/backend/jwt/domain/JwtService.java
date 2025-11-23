@@ -1,6 +1,5 @@
 package com.artpond.backend.jwt.domain;
 
-import com.artpond.backend.user.domain.UserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -24,8 +23,6 @@ public class JwtService {
 
     @Value("${jwt.expiration-access}")
     private Long accessTokenExpiration;
-
-    private final UserService userService;
 
     private SecretKey getSignInKey() {
         return Keys.hmacShaKeyFor(secret.getBytes());

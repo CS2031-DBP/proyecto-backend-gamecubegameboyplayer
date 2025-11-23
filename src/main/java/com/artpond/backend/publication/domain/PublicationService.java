@@ -77,11 +77,11 @@ public class PublicationService {
             String username) {
 
         if (imageFiles == null || imageFiles.isEmpty()) {
-            throw new PublicationCreationException("At least one image is required");
+            throw new PublicationCreationException("Se requiere almenos una imagen para subir una publicación");
         }
 
         if (imageFiles.size() > 5) {
-            throw new PublicationCreationException("Cannot upload more than 5 images");
+            throw new PublicationCreationException("No se pueden subir más de 5 imagenes");
         }
 
         if ((dto.getOsmId() != null && dto.getOsmType() == null) ||
@@ -117,9 +117,9 @@ public class PublicationService {
             List<Image> imageEntities = uploadResults.stream()
                     .map(imgResult -> {
                         Image img = new Image();
-                        img.setUrl(imgResult.getPublicUrl()); // Watermarked public URL
-                        img.setCleanFileKey(imgResult.getCleanFileKey()); // Clean version key
-                        img.setPublicFileKey(imgResult.getPublicFileKey()); // For deletion
+                        img.setUrl(imgResult.getPublicUrl());
+                        img.setCleanFileKey(imgResult.getCleanFileKey());
+                        img.setPublicFileKey(imgResult.getPublicFileKey());
                         img.setPublication(savedPublication);
                         return img;
                     })
@@ -129,9 +129,8 @@ public class PublicationService {
             publicationRepository.save(savedPublication);
 
         } catch (IOException e) {
-            // Cleanup: delete the publication if image upload fails
             publicationRepository.delete(savedPublication);
-            throw new PublicationCreationException("Failed to upload images: " + e.getMessage());
+            throw new PublicationCreationException("No se pudo subir imagen: " + e.getMessage());
         }
 
         if (dto.getOsmId() != null && dto.getOsmType() != null) {

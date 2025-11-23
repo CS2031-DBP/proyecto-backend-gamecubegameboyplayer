@@ -3,6 +3,7 @@ package com.artpond.backend.image.domain;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
+import com.artpond.backend.definitions.exception.ForbiddenException;
 import com.artpond.backend.image.dto.ImageUploadDto;
 
 import lombok.RequiredArgsConstructor;
@@ -94,7 +95,7 @@ public class ImageService {
     
     public byte[] downloadCleanImage(String fileName, String userId) throws IOException {
         if (!fileName.contains(userId)) {
-            throw new SecurityException("Unauthorized access");
+            throw new ForbiddenException("Unauthorized access");
         }
         
         S3Object s3Object = s3Client.getObject(bucketName, fileName);

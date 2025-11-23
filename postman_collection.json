@@ -1,13 +1,175 @@
 {
 	"info": {
-		"_postman_id": "f03b76f3-3433-4a87-a282-55cde124394d",
-		"name": "Lab-03",
+		"_postman_id": "4a8c7da4-2e7f-4c1f-bb22-0e4619996d16",
+		"name": "Artpond Collection",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "47767506"
+		"_exporter_id": "47767520",
+		"_collection_link": "https://artpond-testing.postman.co/workspace/artpond-testing-Workspace~7c98fef8-c760-4bd3-b605-73561469d967/collection/47767520-4a8c7da4-2e7f-4c1f-bb22-0e4619996d16?action=share&source=collection_link&creator=47767520"
 	},
 	"item": [
 		{
-			"name": "register",
+			"name": "publication",
+			"item": [
+				{
+					"name": "Get publication",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/publication/1",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"publication",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create publication (with Place)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"description\": \"My first art post!\",\n    \"contentWarning\": false,\n    \"machineGenerated\": false,\n    \"tags\": [\n        \"digital\",\n        \"portrait\"\n    ],\n    \"images\": [\n        {\n            \"url\": \"https://example.com/myart.png\"\n        }\n    ],\n\n    \"osmId\": 437212067,\n    \"osmType\": \"way\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/publication",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"publication"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create publication (no Place)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"description\": \"My first art post!\",\n    \"contentWarning\": false,\n    \"machineGenerated\": false,\n    \"tags\": [\n        \"digital\",\n        \"portrait\"\n    ],\n    \"images\": [\n        {\n            \"url\": \"https://example.com/myart.png\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/publication",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"publication"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get publications",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/publication?page=0&size=5",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"publication"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create comment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"text\": \"This artwork is stunning!\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/publication/1/comment",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"publication",
+								"1",
+								"comment"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Register",
 			"event": [
 				{
 					"listen": "test",
@@ -42,11 +204,14 @@
 				}
 			],
 			"request": {
+				"auth": {
+					"type": "noauth"
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"email\": \"artlover@example.com\",\r\n    \"password\": \"securePassword123\",\r\n    \"username\": \"artpondFan\",\r\n    \"displayName\": \"Art Pond Enthusiast\"\r\n}",
+					"raw": "{\r\n    \"email\": \"sajoudks@outlook.com\",\r\n    \"password\": \"securePassword123\",\r\n    \"username\": \"artpondo\",\r\n    \"displayName\": \"Art Pond Enthusiast\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -54,12 +219,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8080/auth/register",
-					"protocol": "http",
+					"raw": "{{baseURL}}/auth/register",
 					"host": [
-						"localhost"
+						"{{baseURL}}"
 					],
-					"port": "8080",
 					"path": [
 						"auth",
 						"register"
@@ -69,7 +232,7 @@
 			"response": []
 		},
 		{
-			"name": "login",
+			"name": "Login",
 			"event": [
 				{
 					"listen": "test",
@@ -97,6 +260,9 @@
 				}
 			],
 			"request": {
+				"auth": {
+					"type": "noauth"
+				},
 				"method": "POST",
 				"header": [],
 				"body": {
@@ -109,12 +275,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8080/auth/login",
-					"protocol": "http",
+					"raw": "{{baseURL}}/auth/login",
 					"host": [
-						"localhost"
+						"{{baseURL}}"
 					],
-					"port": "8080",
 					"path": [
 						"auth",
 						"login"
@@ -124,25 +288,18 @@
 			"response": []
 		},
 		{
-			"name": "read",
+			"name": "Read",
 			"request": {
 				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Bearer {{jwt_token}}",
-						"type": "text"
-					}
-				],
+				"header": [],
 				"url": {
-					"raw": "http://localhost:8080/user/{{user_id}}",
-					"protocol": "http",
+					"raw": "{{baseURL}}/user/i/{{user_id}}",
 					"host": [
-						"localhost"
+						"{{baseURL}}"
 					],
-					"port": "8080",
 					"path": [
 						"user",
+						"i",
 						"{{user_id}}"
 					]
 				}
@@ -150,150 +307,15 @@
 			"response": []
 		},
 		{
-			"name": "create publication",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Bearer {{jwt_token}}",
-						"type": "text"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n  \"description\": \"My first art post!\",\r\n  \"tags\": [\"digital\", \"portrait\"],\r\n  \"images\": [\r\n    {\"url\": \"https://example.com/myart.png\"}\r\n  ]\r\n}\r\n",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8080/publication",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"publication"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "get publications",
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "",
-						"value": "",
-						"type": "text",
-						"disabled": true
-					}
-				],
-				"url": {
-					"raw": "http://localhost:8080/publication?page=0&size=5",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"publication"
-					],
-					"query": [
-						{
-							"key": "page",
-							"value": "0"
-						},
-						{
-							"key": "size",
-							"value": "5"
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "get publication",
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Bearer {{jwt_token}}",
-						"type": "text",
-						"disabled": true
-					}
-				],
-				"url": {
-					"raw": "http://localhost:8080/publication/1",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"publication",
-						"1"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "create comment",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Bearer {{jwt_token}}",
-						"type": "text"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n  \"text\": \"This artwork is stunning!\"\r\n}\r\n",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost:8080/publication/1/comment",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"publication",
-						"1",
-						"comment"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "search by tag",
+			"name": "Search by tag",
 			"request": {
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8080/publication/tag/digital?page=0&size=5",
-					"protocol": "http",
+					"raw": "{{baseURL}}/publication/tag/digital?page=0&size=5",
 					"host": [
-						"localhost"
+						"{{baseURL}}"
 					],
-					"port": "8080",
 					"path": [
 						"publication",
 						"tag",
@@ -314,6 +336,16 @@
 			"response": []
 		}
 	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
 	"event": [
 		{
 			"listen": "prerequest",
@@ -339,6 +371,10 @@
 		}
 	],
 	"variable": [
+		{
+			"key": "baseURL",
+			"value": ""
+		},
 		{
 			"key": "jwt_token",
 			"value": ""
