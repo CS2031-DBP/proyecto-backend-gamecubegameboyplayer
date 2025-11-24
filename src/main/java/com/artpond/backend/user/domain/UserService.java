@@ -93,21 +93,21 @@ public class UserService implements UserDetailsService {
     }
 
     public User getUserById (Long id) {
-        return userRepository.findById(id).orElseThrow();
+        return userRepository.findById(id).orElseThrow(() -> new NotFoundException("The requested id was not found."));
     }
 
     public User findByEmail (String email) {
-        return userRepository.findByEmail(email).orElseThrow();
+        return userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("There isn't an user registered to this email."));
     }
 
     public User getUserByUsername(String userName) {
-        return userRepository.findByUsername(userName).orElseThrow();
+        return userRepository.findByUsername(userName).orElseThrow(() -> new NotFoundException("There isn't an user with this username."));
     }
 
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if  (authentication == null || !authentication.isAuthenticated()) {
-            throw new NotFoundException("No authenticated user found");
+            throw new NotFoundException("No authenticated user found.");
         }
 
         return (User)authentication.getPrincipal();

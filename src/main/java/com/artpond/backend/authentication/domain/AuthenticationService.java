@@ -17,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +29,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final ApplicationEventPublisher publisher;
+    private final RefreshTokenService refreshTokenService;
 
     public LoginResponseDto jwtRegister(final RegisterUserDto dto) {
         final UserResponseDto createdUser = userService.registerUser(dto, passwordEncoder);
@@ -46,11 +48,28 @@ public class AuthenticationService {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword())
         );
-        UserDetails userDetails = (User) authentication.getPrincipal();
-        String token = jwtService.generateToken(userDetails);
+        User user = (User) authentication.getPrincipal();
+        String accessToken = jwtService.generateToken(user);
 
-        LoginResponseDto response = modelMapper.map(userDetails, LoginResponseDto.class);
-        response.setToken(token);
+        LoginResponseDto response = modelMapper.map(user, LoginResponseDto.class);
+        response.setToken(accessToken);
         return response;
+    }
+
+    @Transactional
+    public LoginResponseDto refreshToken(String requestRefreshToken) {
+        RefreshToken token = refreshTokenService.findByToken(requestRefreshToken);
+        token = refreshTokenService.verifyExpiration(token);
+
+        User user = token.getUser();
+        String accessToken = jwtService.generateToken(user);
+
+        LoginResponseDto response = modelMapper.map(user, LoginResponseDto.class);
+        response.setToken(accessToken);
+        return response;
+    }
+
+    public void logout(Long userId) {
+        refreshTokenService.deleteByUserId(userId);
     }
 }
