@@ -9,7 +9,7 @@ import com.artpond.backend.user.domain.User;
 import com.artpond.backend.user.dto.RegisterUserDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value; // Import this
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
