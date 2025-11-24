@@ -76,7 +76,6 @@ public class ImageService {
         }
         
         String publicUrl = s3Client.getUrl(bucketName, publicFileName).toString();
-        
         return new ImageUploadDto(cleanFileName, publicFileName, publicUrl);
     }
     

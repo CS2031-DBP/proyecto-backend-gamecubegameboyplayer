@@ -60,15 +60,28 @@ public class PublicationService {
         dto.setMachineGenerated(pub.getMachineGenerated());
         dto.setCreationDate(pub.getCreationDate());
         dto.setAuthor(modelMapper.map(pub.getAuthor(), PublicUserDto.class));
+        
         dto.setImages(
-                pub.getImages().stream()
-                        .map(img -> modelMapper.map(img, ImageResponseDto.class))
-                        .collect(toList()));
+            pub.getImages().stream()
+                .map(img -> {
+                    ImageResponseDto imgDto = new ImageResponseDto();
+                    imgDto.setId(img.getId());
+                    imgDto.setUrl(img.getUrl());
+                    return imgDto;
+                })
+                .collect(toList())
+        );
+        
         dto.setTags(
-                pub.getTags().stream()
-                        .map(tg -> modelMapper.map(tg, TagsResponseDto.class))
-                        .collect(toList()));
-        dto.setPlace(modelMapper.map(pub.getPlace(), PlaceDataDto.class));
+            pub.getTags().stream()
+                .map(tg -> modelMapper.map(tg, TagsResponseDto.class))
+                .collect(toList())
+        );
+        
+        // Place might be null during async processing
+        dto.setPlace(pub.getPlace() != null ? 
+            modelMapper.map(pub.getPlace(), PlaceDataDto.class) : null);
+        
         return dto;
     }
 
