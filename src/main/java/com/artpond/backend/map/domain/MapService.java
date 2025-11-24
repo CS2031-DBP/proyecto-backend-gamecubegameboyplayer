@@ -19,6 +19,7 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.artpond.backend.definitions.exception.BadRequestException;
 import com.artpond.backend.definitions.exception.NotFoundException;
 import com.artpond.backend.map.dto.JsonPlaceDataDto;
 import com.artpond.backend.map.dto.PlaceDataDto;
@@ -37,6 +38,10 @@ import java.util.List;
 public class MapService {
     private final RestTemplate restTemplate;
     private final PublicationRepository publicationRepository;
+
+    private static final int MAX_RESULTS_LIMIT = 150;
+    private static final double MAX_VIEWPORT_DEGREE_DIFF = 1.0;
+
     private final MapRepository mapRepository;
     private final ModelMapper modelMapper;
     private final GeometryFactory geometryFactory = new GeometryFactory();
@@ -47,7 +52,16 @@ public class MapService {
     }
 
     public List<PlaceMapSummaryDto> getPlacesInView(double minLat, double minLon, double maxLat, double maxLon) {
-        return mapRepository.findPlacesInBoundingBox(minLat, minLon, maxLat, maxLon);
+        if (minLat >= maxLat || minLon >= maxLon) {
+            throw new BadRequestException("Coordenadas inválidas: min debe ser menor que max.");
+        }
+        double latDiff = maxLat - minLat;
+        double lonDiff = maxLon - minLon;
+
+        if (latDiff > MAX_VIEWPORT_DEGREE_DIFF || lonDiff > MAX_VIEWPORT_DEGREE_DIFF) {
+            throw new BadRequestException("El área de búsqueda es demasiado grande. Por favor acerca el mapa.");
+        }
+        return mapRepository.findPlacesInBoundingBox(minLat, minLon, maxLat, maxLon, MAX_RESULTS_LIMIT);
     }
 
     @Transactional

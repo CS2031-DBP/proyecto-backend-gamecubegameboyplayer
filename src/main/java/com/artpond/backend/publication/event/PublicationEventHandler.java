@@ -7,9 +7,7 @@ import com.artpond.backend.publication.domain.FailedPlaceTask;
 import com.artpond.backend.publication.domain.Publication;
 import com.artpond.backend.publication.infrastructure.FailedPlaceRepository;
 import com.artpond.backend.publication.infrastructure.PublicationRepository;
-import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Refill;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -32,7 +30,7 @@ public class PublicationEventHandler {
     private static final int MAX_RETRY_ATTEMPTS = 3;
     
     private final Bucket nominatimRateLimiter = Bucket.builder()
-        .addLimit(Bandwidth.classic(1, Refill.intervally(1, Duration.ofSeconds(1))))
+        .addLimit(limit -> limit.capacity(1).refillIntervally(1, Duration.ofSeconds(1)))
         .build();
     
     @Async("placeProcessingExecutor")
