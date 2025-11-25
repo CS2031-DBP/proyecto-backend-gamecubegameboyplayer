@@ -1,6 +1,7 @@
 package com.artpond.backend.user.domain;
 
 import com.artpond.backend.authentication.event.UserUpdatedEvent;
+import com.artpond.backend.definitions.exception.BadRequestException;
 import com.artpond.backend.definitions.exception.ForbiddenException;
 import com.artpond.backend.definitions.exception.NotFoundException;
 import com.artpond.backend.image.domain.WatermarkService;
@@ -90,6 +91,30 @@ public class UserService implements UserDetailsService {
             user.setEmail(newMail);
             eventPublisher.publishEvent(new UserUpdatedEvent(pastMail, user.getUsername()));
         }
+    }
+
+    public UserResponseDto switchUserRole(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException());
+
+        if (user.getRole() == Role.ADMIN) {
+            throw new ForbiddenException("Los administradores no pueden cambiar su rol manualmente.");
+        }
+
+        boolean hasPublications = !user.getPublications().isEmpty(); 
+        
+        if (!hasPublications) {
+            throw new BadRequestException("Debes tener al menos una publicación para cambiar tu rol a ARTISTA/USUARIO.");
+        }
+
+        if (user.getRole() == Role.USER) {
+            user.setRole(Role.ARTIST);
+        } else {
+            user.setRole(Role.USER);
+        }
+
+        User savedUser = userRepository.save(user);
+        return modelMapper.map(savedUser, UserResponseDto.class);
     }
 
     public User getUserById (Long id) {

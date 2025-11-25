@@ -1,10 +1,12 @@
 package com.artpond.backend.image.domain;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import javax.imageio.ImageIO;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -58,7 +60,6 @@ public class WatermarkService {
         
         String watermarkKey = result.getObjectSummaries().get(0).getKey();
         S3Object s3Object = s3Client.getObject(bucketName, watermarkKey);
-        
         return ImageIO.read(s3Object.getObjectContent());
     }
     
@@ -71,6 +72,18 @@ public class WatermarkService {
         
         for (S3ObjectSummary summary : result.getObjectSummaries()) {
             s3Client.deleteObject(bucketName, summary.getKey());
+        }
+    }
+
+    public BufferedImage getDefaultWatermark() throws IOException {
+        try {
+            ClassPathResource resource = new ClassPathResource("static/images/artpondo_text.png");
+            try (InputStream inputStream = resource.getInputStream()) {
+                return ImageIO.read(inputStream);
+            }
+        } catch (IOException e) {
+            System.err.println("YAPPING!!!! No se encontró la marca de agua de artpond. jelou? donde esta?");
+            return null;
         }
     }
 }

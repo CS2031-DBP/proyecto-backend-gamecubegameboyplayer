@@ -78,4 +78,7 @@ public class Publication {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "place_id", nullable = true)
     private Place place;
+
+    @Column(nullable = false)
+    private Boolean hideCleanImage = false;
 }

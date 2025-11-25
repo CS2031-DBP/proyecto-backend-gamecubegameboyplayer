@@ -1,5 +1,6 @@
 package com.artpond.backend.publication.domain;
 
+import com.artpond.backend.definitions.exception.BadRequestException;
 import com.artpond.backend.definitions.exception.ForbiddenException;
 import com.artpond.backend.definitions.exception.NotFoundException;
 import com.artpond.backend.image.domain.Image;
@@ -22,6 +23,12 @@ import com.artpond.backend.user.domain.User;
 import com.artpond.backend.user.dto.PublicUserDto;
 import com.artpond.backend.user.exception.UserNotFoundException;
 import com.artpond.backend.user.infrastructure.UserRepository;
+import com.artpond.backend.publication.infrastructure.FailedPlaceRepository;
+import com.artpond.backend.publication.dto.FailedTaskDto;
+import com.artpond.backend.publication.event.PublicationLikedEvent;
+import com.artpond.backend.publication.event.PublicationModeratedEvent;
+import com.artpond.backend.user.domain.Role;
+
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.ApplicationEventPublisher;
@@ -47,12 +54,17 @@ public class PublicationService {
     private final TagRepository tagRepository;
     private final ImageService imageService;
     private final ApplicationEventPublisher eventPublisher;
+    private final FailedPlaceRepository failedPlaceRepository;
 
     public Publication findPublicationById(Long id) {
         return publicationRepository.findById(id).orElseThrow();
     }
 
     private PublicationResponseDto toDto(Publication pub) {
+        return toDto(pub, null);
+    }
+
+    private PublicationResponseDto toDto(Publication pub, User viewer) {
         PublicationResponseDto dto = new PublicationResponseDto();
         dto.setId(pub.getId());
         dto.setDescription(pub.getDescription());
@@ -61,16 +73,22 @@ public class PublicationService {
         dto.setCreationDate(pub.getCreationDate());
         dto.setAuthor(modelMapper.map(pub.getAuthor(), PublicUserDto.class));
         
-        dto.setImages(
-            pub.getImages().stream()
-                .map(img -> {
-                    ImageResponseDto imgDto = new ImageResponseDto();
-                    imgDto.setId(img.getId());
-                    imgDto.setUrl(img.getUrl());
-                    return imgDto;
-                })
-                .collect(toList())
-        );
+        dto.setImages(pub.getImages().stream().map(img -> {
+            ImageResponseDto imgDto = new ImageResponseDto();
+            imgDto.setId(img.getId());
+            boolean showClean = false;
+            if (viewer != null) {
+                if (Boolean.FALSE.equals(pub.getHideCleanImage())) {
+                    showClean = true;
+                }
+            }
+            if (showClean) {
+                imgDto.setUrl(imageService.generatePresignedUrl(img.getCleanFileKey()));
+            } else {
+                imgDto.setUrl(img.getUrl());
+            }
+            return imgDto;
+        }).collect(toList()));
         
         dto.setTags(
             pub.getTags().stream()
@@ -78,7 +96,7 @@ public class PublicationService {
                 .collect(toList())
         );
         
-        // Place might be null during async processing
+        // el lugar puede ser nulo, mientras que no este procesado o no se haya etiqutado
         dto.setPlace(pub.getPlace() != null ? 
             modelMapper.map(pub.getPlace(), PlaceDataDto.class) : null);
         
@@ -86,15 +104,31 @@ public class PublicationService {
     }
 
     @Transactional
-    public PublicationCreatedDto createPublication(PublicationRequestDto dto, List<MultipartFile> imageFiles,
-            String username) {
-
+    public PublicationCreatedDto createPublication(PublicationRequestDto dto, List<MultipartFile> imageFiles, String username) {
+        
         if (imageFiles == null || imageFiles.isEmpty()) {
             throw new PublicationCreationException("Se requiere almenos una imagen para subir una publicación");
         }
 
-        if (imageFiles.size() > 5) {
-            throw new PublicationCreationException("No se pueden subir más de 5 imagenes");
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException());
+
+        int maxImagesAllowed = (user.getRole() == Role.ARTIST) 
+                               ? ImageService.MAX_IMAGES_ARTIST 
+                               : ImageService.MAX_IMAGES_USER;
+
+        if (imageFiles.size() > maxImagesAllowed) {
+            throw new PublicationCreationException(
+                String.format("Tu rol actual (%s) solo permite subir hasta %d imágenes.", 
+                user.getRole(), maxImagesAllowed)
+            );
+        }
+
+        int maxTags = user.getRole() == Role.ARTIST ? 30 : 15;
+        if (dto.getTags() != null && dto.getTags().size() > maxTags) {
+             throw new BadRequestException(
+                String.format("Tu rol actual (%s) solo permite %d etiquetas.", user.getRole(), maxTags)
+            );
         }
 
         if ((dto.getOsmId() != null && dto.getOsmType() == null) ||
@@ -102,16 +136,13 @@ public class PublicationService {
             throw new PublicationCreationException("osmId and osmType must both be provided or both be null");
         }
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException());
-
         Publication publication = new Publication();
         publication.setDescription(dto.getDescription());
         publication.setAuthor(user);
         publication.setContentWarning(dto.getContentWarning() != null ? dto.getContentWarning() : false);
         publication.setMachineGenerated(dto.getMachineGenerated() != null ? dto.getMachineGenerated() : false);
+        publication.setHideCleanImage(dto.getHideCleanImage() != null ? dto.getHideCleanImage() : false);
 
-        // Handle tags
         List<Tag> tagEntities = dto.getTags().stream()
                 .map(tagName -> tagRepository.findByName(tagName)
                         .orElseGet(() -> {
@@ -125,7 +156,7 @@ public class PublicationService {
 
         try {
             List<ImageUploadDto> uploadResults = imageService.uploadImagesForPublication(
-                    imageFiles, username, savedPublication.getId());
+                    imageFiles, username, savedPublication.getId(), user.getRole());
 
             List<Image> imageEntities = uploadResults.stream()
                     .map(imgResult -> {
@@ -141,7 +172,7 @@ public class PublicationService {
             savedPublication.setImages(imageEntities);
             publicationRepository.save(savedPublication);
 
-        } catch (IOException e) {
+        } catch (IOException | IllegalArgumentException e) {
             publicationRepository.delete(savedPublication);
             throw new PublicationCreationException("No se pudo subir imagen: " + e.getMessage());
         }
@@ -158,7 +189,7 @@ public class PublicationService {
     }
 
     public Page<PublicationResponseDto> getAllPublications(Pageable pageable, User currentUser) {
-        return publicationRepository.findAll(pageable).map(this::toDto);
+        return publicationRepository.findAll(pageable).map(pub -> toDto(pub, currentUser));
     }
 
     public Page<PublicationResponseDto> getPublicationsByTag(String tagName, Pageable pageable, User currentUser) {
@@ -179,7 +210,7 @@ public class PublicationService {
                 throw new ForbiddenException("User has explicit content disabled.");
         }
 
-        return toDto(publication);
+        return toDto(publication, currentUser);
     }
 
     public PublicationResponseDto patchPublication(Long id, Map<String, Object> updates, Long userId) {
@@ -209,7 +240,7 @@ public class PublicationService {
             }
         });
 
-        return toDto(publicationRepository.save(pub));
+        return toDto(publicationRepository.save(pub), user);
     }
 
     @Transactional
@@ -218,22 +249,77 @@ public class PublicationService {
         Publication publication = publicationRepository.findById(id)
                 .orElseThrow(() -> new PublicationNotFoundException());
 
-        if (!publication.getAuthor().getUserId().equals(userId) && user.getRole() != Role.ADMIN) {
+        boolean isOwner = publication.getAuthor().getUserId().equals(userId);
+        boolean isAdmin = user.getRole() == Role.ADMIN || user.getRole() == Role.MODERATOR;
+
+        if (!isOwner && !isAdmin) {
             throw new ForbiddenException("No se puede eliminar esta publicacion.");
         }
 
-        // Delete all images from S3
-        List<String> cleanKeys = publication.getImages().stream()
-                .map(Image::getCleanFileKey)
-                .collect(toList());
-        List<String> publicKeys = publication.getImages().stream()
-                .map(Image::getPublicFileKey)
-                .collect(toList());
+        if (isAdmin && !isOwner) {
+            String preview = publication.getDescription() != null 
+                    ? publication.getDescription().substring(0, Math.min(publication.getDescription().length(), 30)) 
+                    : "Publicación #" + publication.getId();
 
+            eventPublisher.publishEvent(new PublicationModeratedEvent(
+                this, 
+                publication.getAuthor(), 
+                preview, 
+                "Contenido eliminado por normas de la comunidad."
+            ));
+        }
+
+        List<String> cleanKeys = publication.getImages().stream().map(Image::getCleanFileKey).collect(toList());
+        List<String> publicKeys = publication.getImages().stream().map(Image::getPublicFileKey).collect(toList());
         imageService.deleteMultipleImages(cleanKeys, publicKeys);
 
         publicationRepository.deleteById(id);
 
         return null;
+    }
+
+    // heart systemo
+    @Transactional
+    public void toggleHeart(Long publicationId, Long userId) {
+        Publication publication = publicationRepository.findById(publicationId)
+                .orElseThrow(() -> new PublicationNotFoundException());
+        
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException());
+
+        if (publication.getHearts().contains(user)) {
+            publication.getHearts().remove(user);
+        } else {
+            publication.getHearts().add(user);
+            eventPublisher.publishEvent(new PublicationLikedEvent(this, publication, user));
+        }
+
+        publicationRepository.save(publication);
+    }
+
+    // task systemo
+
+    public Page<FailedTaskDto> getFailedPlaceTasks(Pageable pageable) {
+        return failedPlaceRepository.findAll(pageable)
+            .map(task -> modelMapper.map(task, FailedTaskDto.class));
+    }
+
+    @Transactional
+    public void retryFailedTask(Long taskId) {
+        FailedPlaceTask task = failedPlaceRepository.findById(taskId)
+                .orElseThrow(() -> new NotFoundException("Task not found"));
+
+        eventPublisher.publishEvent(new PublicationCreatedEvent(
+                this,
+                task.getPublicationId(),
+                task.getOsmId(),
+                task.getOsmType(),
+                1
+        ));
+        failedPlaceRepository.delete(task);
+    }
+
+    public void deleteFailedTask(Long taskId) {
+        failedPlaceRepository.deleteById(taskId);
     }
 }

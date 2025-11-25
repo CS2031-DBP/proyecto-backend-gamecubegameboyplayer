@@ -26,6 +26,7 @@ public class UserController {
     private final ModelMapper modelMapper;
 
     @GetMapping("/i/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserDetailsDto> getUsers(@PathVariable Long id) {
         return ResponseEntity.ok(modelMapper.map(userService.getUserById(id), UserDetailsDto.class));
     }
@@ -51,5 +52,11 @@ public class UserController {
     public ResponseEntity<?> deleteUser(@PathVariable Long id, @AuthenticationPrincipal User userDetails) {
         userService.deleteUserById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/switch-role")
+    @PreAuthorize("hasRole('USER') or hasRole('ARTIST')")
+    public ResponseEntity<UserResponseDto> switchRole(@AuthenticationPrincipal User userDetails) {
+        return ResponseEntity.ok(userService.switchUserRole(userDetails.getUserId()));
     }
 }

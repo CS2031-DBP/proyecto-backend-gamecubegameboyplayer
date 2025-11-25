@@ -4,6 +4,7 @@ import com.artpond.backend.user.dto.PublicUserDto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class CommentResponseDto {
@@ -11,4 +12,5 @@ public class CommentResponseDto {
     private String text;
     private PublicUserDto author;
     private LocalDateTime createdAt;
+    private List<CommentResponseDto> replies; 
 }

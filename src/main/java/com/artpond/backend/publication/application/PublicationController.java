@@ -28,7 +28,7 @@ public class PublicationController {
     private final PublicationService publicationService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('USER') or hasRole('ARTIST') or hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PublicationCreatedDto> createPublication(
             @RequestPart("data") @Valid PublicationRequestDto dto,
             @RequestPart("images") List<MultipartFile> images,
@@ -55,7 +55,7 @@ public class PublicationController {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasRole('USER') or hasRole('ARTIST') or hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PublicationResponseDto> patchPublication(
             @PathVariable Long id,
             @RequestBody Map<String, Object> updates,
@@ -64,10 +64,20 @@ public class PublicationController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('USER') or hasRole('ARTIST') or hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> deletePublicationById(@PathVariable Long id,
                                                    @AuthenticationPrincipal User userDetails) {
         publicationService.deletePublicationById(id, userDetails.getUserId());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/heart")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> toggleHeart(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User userDetails) {
+        
+        publicationService.toggleHeart(id, userDetails.getUserId());
+        return ResponseEntity.ok().build();
     }
 }

@@ -2,7 +2,9 @@ package com.artpond.backend.comment.domain;
 
 import com.artpond.backend.comment.dto.CommentRequestDto;
 import com.artpond.backend.comment.dto.CommentResponseDto;
+import com.artpond.backend.comment.event.CommentCreatedEvent; // Importar evento
 import com.artpond.backend.comment.infrastructure.CommentRepository;
+import com.artpond.backend.definitions.exception.NotFoundException;
 import com.artpond.backend.publication.domain.Publication;
 import com.artpond.backend.publication.domain.PublicationService;
 import com.artpond.backend.user.domain.User;
@@ -10,8 +12,12 @@ import com.artpond.backend.user.domain.UserService;
 import com.artpond.backend.user.dto.PublicUserDto;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher; // Importar Publisher
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +26,9 @@ public class CommentService {
     private final PublicationService publicationService;
     private final UserService userService;
     private final ModelMapper modelMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
+    @Transactional
     public CommentResponseDto createComment(Long publicationId, CommentRequestDto dto, long userId) {
         Publication publication = publicationService.findPublicationById(publicationId);
         User author = userService.getUserById(userId);
@@ -29,27 +37,43 @@ public class CommentService {
         comment.setContent(dto.getText());
         comment.setPublication(publication);
         comment.setUser(author);
-        commentRepository.save(comment);
 
-        CommentResponseDto commentResponseDto = new CommentResponseDto();
-        commentResponseDto.setId(comment.getId());
-        commentResponseDto.setText(comment.getContent());
-        commentResponseDto.setAuthor(modelMapper.map(author, PublicUserDto.class));
-        commentResponseDto.setCreatedAt(comment.getCreatedDate());
-        return commentResponseDto;
+        if (dto.getParentId() != null) {
+            Comment parent = commentRepository.findById(dto.getParentId())
+                    .orElseThrow(() -> new NotFoundException("Comentario padre no encontrado"));
+            comment.setParent(parent);
+        }
+
+        Comment savedComment = commentRepository.save(comment);
+        eventPublisher.publishEvent(new CommentCreatedEvent(this, savedComment));
+
+        return mapToDto(savedComment);
     }
 
     public List<CommentResponseDto> getComments(Long publicationId) {
-        return commentRepository.findByPublicationId(publicationId).stream().map(comment -> {
-            CommentResponseDto commentResponseDto = new CommentResponseDto();
-            commentResponseDto.setId(comment.getId());
-            commentResponseDto.setText(comment.getContent());
-            commentResponseDto.setAuthor(modelMapper.map(comment.getUser(), PublicUserDto.class));
-            commentResponseDto.setCreatedAt(comment.getCreatedDate());
-            return commentResponseDto;
-        }).toList();
+        List<Comment> rootComments = commentRepository.findByPublicationIdAndParentIsNull(publicationId);
+        
+        return rootComments.stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
 
+    private CommentResponseDto mapToDto(Comment comment) {
+        CommentResponseDto dto = new CommentResponseDto();
+        dto.setId(comment.getId());
+        dto.setText(comment.getContent());
+        dto.setAuthor(modelMapper.map(comment.getUser(), PublicUserDto.class));
+        dto.setCreatedAt(comment.getCreatedDate());
+        
+        if (comment.getReplies() != null && !comment.getReplies().isEmpty()) {
+            dto.setReplies(comment.getReplies().stream()
+                    .map(this::mapToDto)
+                    .collect(Collectors.toList()));
+        }
+        
+        return dto;
+    }
+    
     public Void deleteComment(Long commentId, Long userId) {
         Comment comment = commentRepository.findById(commentId).orElseThrow();
         if (comment.getUser().getUserId().equals(userId)) {

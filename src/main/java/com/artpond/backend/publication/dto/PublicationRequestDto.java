@@ -21,4 +21,5 @@ public class PublicationRequestDto {
 
     private Long osmId; // ubicacion mundial del lugar este
     private String osmType; // "node" o "way" o "relation" segun el identificador
+    private Boolean hideCleanImage = false;
 }
