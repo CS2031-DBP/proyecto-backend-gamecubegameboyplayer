@@ -2,17 +2,19 @@ package com.artpond.backend.comment.domain;
 
 import com.artpond.backend.comment.dto.CommentRequestDto;
 import com.artpond.backend.comment.dto.CommentResponseDto;
-import com.artpond.backend.comment.event.CommentCreatedEvent; // Importar evento
+import com.artpond.backend.comment.event.CommentCreatedEvent;
 import com.artpond.backend.comment.infrastructure.CommentRepository;
+import com.artpond.backend.definitions.exception.ForbiddenException;
 import com.artpond.backend.definitions.exception.NotFoundException;
 import com.artpond.backend.publication.domain.Publication;
 import com.artpond.backend.publication.domain.PublicationService;
+import com.artpond.backend.user.domain.Role;
 import com.artpond.backend.user.domain.User;
 import com.artpond.backend.user.domain.UserService;
 import com.artpond.backend.user.dto.PublicUserDto;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.context.ApplicationEventPublisher; // Importar Publisher
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,10 +54,7 @@ public class CommentService {
 
     public List<CommentResponseDto> getComments(Long publicationId) {
         List<Comment> rootComments = commentRepository.findByPublicationIdAndParentIsNull(publicationId);
-        
-        return rootComments.stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
+        return rootComments.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     private CommentResponseDto mapToDto(Comment comment) {
@@ -66,19 +65,23 @@ public class CommentService {
         dto.setCreatedAt(comment.getCreatedDate());
         
         if (comment.getReplies() != null && !comment.getReplies().isEmpty()) {
-            dto.setReplies(comment.getReplies().stream()
-                    .map(this::mapToDto)
-                    .collect(Collectors.toList()));
+            dto.setReplies(comment.getReplies().stream().map(this::mapToDto).collect(Collectors.toList()));
         }
-        
         return dto;
     }
     
     public Void deleteComment(Long commentId, Long userId) {
-        Comment comment = commentRepository.findById(commentId).orElseThrow();
-        if (comment.getUser().getUserId().equals(userId)) {
-            commentRepository.deleteById(commentId);
+        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new NotFoundException("Comentario no encontrado"));
+        User requestUser = userService.getUserById(userId);
+
+        boolean isAuthor = comment.getUser().getUserId().equals(userId);
+        boolean isAdmin = requestUser.getRole() == Role.ADMIN || requestUser.getRole() == Role.MODERATOR;
+
+        if (!isAuthor && !isAdmin) {
+            throw new ForbiddenException("No tienes permiso para eliminar este comentario.");
         }
+        
+        commentRepository.deleteById(commentId);
         return null;
     }
 }

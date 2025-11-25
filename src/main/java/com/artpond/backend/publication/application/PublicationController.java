@@ -5,6 +5,7 @@ import com.artpond.backend.publication.domain.PublicationService;
 import com.artpond.backend.publication.dto.PublicationCreatedDto;
 import com.artpond.backend.publication.dto.PublicationRequestDto;
 import com.artpond.backend.publication.dto.PublicationResponseDto;
+import com.artpond.backend.publication.dto.UpdatePublicationDto; // Nuevo DTO
 import com.artpond.backend.user.domain.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/publication")
@@ -62,9 +62,9 @@ public class PublicationController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PublicationResponseDto> patchPublication(
             @PathVariable Long id,
-            @RequestBody Map<String, Object> updates,
+            @RequestBody @Valid UpdatePublicationDto dto, // Uso del DTO
             @AuthenticationPrincipal User userDetails) {
-        return ResponseEntity.ok(publicationService.patchPublication(id, updates, userDetails.getUserId()));
+        return ResponseEntity.ok(publicationService.patchPublication(id, dto, userDetails.getUserId()));
     }
 
     @DeleteMapping("/{id}")

@@ -3,15 +3,15 @@ package com.artpond.backend.user.application;
 import com.artpond.backend.user.domain.User;
 import com.artpond.backend.user.domain.UserService;
 import com.artpond.backend.user.dto.PublicUserDto;
+import com.artpond.backend.user.dto.UpdateUserDto;
 import com.artpond.backend.user.dto.UserDetailsDto;
 import com.artpond.backend.user.dto.UserResponseDto;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import java.util.Map;
-
 import org.modelmapper.ModelMapper;
-import org.springframework.http.PubType;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -36,20 +36,24 @@ public class UserController {
         return ResponseEntity.ok(modelMapper.map(userService.getUserByUsername(username), UserDetailsDto.class));
     }
 
-    @PatchMapping(value = "/{id}", consumes = PubType.MULTIPART_FORM_DATA_VALUE)
+    @PatchMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserResponseDto> patchUser(
             @PathVariable Long id,
-            @RequestPart(value = "data", required = false) Map<String, Object> updates,
+            @RequestPart(value = "data", required = false) @Valid UpdateUserDto dto, // Usamos DTO y @Valid
             @RequestPart(value = "watermark", required = false) MultipartFile watermark,
             @AuthenticationPrincipal User userDetails) {
-        
-        return ResponseEntity.ok(userService.patchUser(id, updates, watermark, userDetails.getUserId()));
+
+        return ResponseEntity.ok(userService.patchUser(id, dto, watermark, userDetails.getUserId()));
     }
-    
+
     @DeleteMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> deleteUser(@PathVariable Long id, @AuthenticationPrincipal User userDetails) {
+        if (!userDetails.getUserId().equals(id)
+                && !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return ResponseEntity.status(403).build();
+        }
         userService.deleteUserById(id);
         return ResponseEntity.noContent().build();
     }
