@@ -3,12 +3,11 @@ WORKDIR /app
 
 COPY .mvn/ .mvn
 COPY mvnw pom.xml ./
-
 RUN chmod +x mvnw
 RUN ./mvnw dependency:go-offline
 
 COPY src ./src
-COPY scripts ./scripts 
+COPY scripts ./scripts
 
 RUN ./mvnw clean package -DskipTests
 
@@ -16,8 +15,12 @@ FROM eclipse-temurin:21-jdk-jammy
 WORKDIR /app
 
 RUN apt-get update && \
-    apt-get install -y python3 && \
+    apt-get install -y --no-install-recommends python3 python3-pip && \
     rm -rf /var/lib/apt/lists/*
+
+COPY scripts/ai/requirements.txt /app/scripts/ai/requirements.txt
+
+RUN pip3 install --no-cache-dir -r /app/scripts/ai/requirements.txt
 
 COPY scripts/ai /app/scripts/ai
 
