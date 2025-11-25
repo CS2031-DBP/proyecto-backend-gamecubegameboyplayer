@@ -17,7 +17,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "http://api.amerizur.com",
+      "value": "http://localhost:8080",
       "type": "string"
     },
     {
@@ -773,29 +773,47 @@
               "formdata": [
                 {
                   "key": "data",
-                  "value": "{\"description\":\"Artist and photographer\",\"email\":\"newemail@example.com\",\"showExplicit\":true}",
+                  "value": "{\"description\":\"Updated bio at {{$timestamp}}\",\"showExplicit\":true}",
                   "type": "text",
                   "contentType": "application/json"
-                },
-                {
-                  "key": "watermark",
-                  "type": "file",
-                  "src": []
                 }
               ]
             },
             "url": {
-              "raw": "{{base_url}}/user/:id",
+              "raw": "{{base_url}}/user/{{user_id}}",
               "host": ["{{base_url}}"],
-              "path": ["user", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
-              ]
+              "path": ["user", "{{user_id}}"]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('User updated', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('userId');",
+                  "});",
+                  "",
+                  "console.log('✓ User updated successfully');"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('user_id')) {",
+                  "    console.warn('⚠ user_id not set.');",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Delete User",
@@ -803,17 +821,35 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/user/:id",
+              "raw": "{{base_url}}/user/{{user_id}}",
               "host": ["{{base_url}}"],
-              "path": ["user", ":id"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
-              ]
+              "path": ["user", "{{user_id}}"]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "console.log('✓ User deleted successfully');"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('user_id')) {",
+                  "    console.warn('⚠ user_id not set.');",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Switch Role",
@@ -860,7 +896,32 @@
                 }
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is an array of places', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.collectionVariables.set('place_id', jsonData[0].id);",
+                  "        console.log('✓ Found ' + jsonData.length + ' places');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Search Places",
@@ -878,7 +939,26 @@
                 }
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Search results returned', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "console.log('✓ Places search completed');"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Get Posts for Place",
@@ -886,9 +966,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/map/:placeId/posts?page=0&size=20",
+              "raw": "{{base_url}}/map/{{place_id}}/posts?page=0&size=20",
               "host": ["{{base_url}}"],
-              "path": ["map", ":placeId", "posts"],
+              "path": ["map", "{{place_id}}", "posts"],
               "query": [
                 {
                   "key": "page",
@@ -898,15 +978,38 @@
                   "key": "size",
                   "value": "20"
                 }
-              ],
-              "variable": [
-                {
-                  "key": "placeId",
-                  "value": "1"
-                }
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is paginated', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('content');",
+                  "});",
+                  "",
+                  "console.log('✓ Posts for place retrieved');"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('place_id')) {",
+                  "    console.warn('⚠ place_id not set.');",
+                  "}"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -933,7 +1036,32 @@
                 }
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is paginated', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('content');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.content && jsonData.content.length > 0) {",
+                  "        pm.collectionVariables.set('notification_id', jsonData.content[0].id);",
+                  "        console.log('✓ Found ' + jsonData.content.length + ' notifications');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Get Unread Count",
@@ -945,7 +1073,26 @@
               "host": ["{{base_url}}"],
               "path": ["notifications", "unread-count"]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Unread count is a number', function () {",
+                  "    var count = pm.response.json();",
+                  "    pm.expect(count).to.be.a('number');",
+                  "});",
+                  "",
+                  "console.log('✓ Unread count: ' + pm.response.json());"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Mark Notification as Read",
@@ -953,17 +1100,35 @@
             "method": "PATCH",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/notifications/:id/read",
+              "raw": "{{base_url}}/notifications/{{notification_id}}/read",
               "host": ["{{base_url}}"],
-              "path": ["notifications", ":id", "read"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
-              ]
+              "path": ["notifications", "{{notification_id}}", "read"]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "console.log('✓ Notification marked as read');"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('notification_id')) {",
+                  "    console.warn('⚠ notification_id not set.');",
+                  "}"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -982,7 +1147,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"publicationId\": 1,\n  \"reportedUserId\": 2,\n  \"reason\": \"SPAM\",\n  \"details\": \"This is spam content\"\n}"
+              "raw": "{\n  \"publicationId\": {{publication_id}},\n  \"reason\": \"SPAM\",\n  \"details\": \"Test report created at {{$timestamp}}\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/report",
@@ -990,7 +1155,31 @@
               "path": ["report"]
             },
             "description": "Reasons: SPAM, INAPPROPRIATE_CONTENT, HARASSMENT, COPYRIGHT, UNMARKED_AI, OTHER"
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "console.log('✓ Report created successfully');"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('publication_id')) {",
+                  "    console.warn('⚠ publication_id not set.');",
+                  "}"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -1009,14 +1198,38 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"publicationId\": 1,\n  \"justification\": \"This content does not violate guidelines\"\n}"
+              "raw": "{\n  \"publicationId\": {{publication_id}},\n  \"justification\": \"Test appeal at {{$timestamp}} - content does not violate guidelines\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/appeal",
               "host": ["{{base_url}}"],
               "path": ["appeal"]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "console.log('✓ Appeal created successfully');"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('publication_id')) {",
+                  "    console.warn('⚠ publication_id not set.');",
+                  "}"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -1033,7 +1246,21 @@
               "host": ["{{base_url}}"],
               "path": ["tag"]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "console.log('✓ Tag deleted successfully');"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -1065,7 +1292,32 @@
                 }
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is paginated', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('content');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.content && jsonData.content.length > 0) {",
+                  "        pm.collectionVariables.set('report_id', jsonData.content[0].id);",
+                  "        console.log('✓ Found ' + jsonData.content.length + ' reports');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Resolve Report",
@@ -1079,20 +1331,38 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"resolutionNotes\": \"Report reviewed and action taken\"\n}"
+              "raw": "{\n  \"resolutionNotes\": \"Report reviewed and action taken at {{$timestamp}}\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/admin/moderation/reports/:id/resolve",
+              "raw": "{{base_url}}/admin/moderation/reports/{{report_id}}/resolve",
               "host": ["{{base_url}}"],
-              "path": ["admin", "moderation", "reports", ":id", "resolve"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
-              ]
+              "path": ["admin", "moderation", "reports", "{{report_id}}", "resolve"]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "console.log('✓ Report resolved successfully');"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('report_id')) {",
+                  "    console.warn('⚠ report_id not set.');",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Get Failed Place Tasks",
@@ -1114,7 +1384,26 @@
                 }
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is paginated', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('content');",
+                  "});",
+                  "",
+                  "console.log('✓ Failed place tasks retrieved');"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Retry Place Task",
@@ -1122,17 +1411,25 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/admin/moderation/tasks/place/:taskId/retry",
+              "raw": "{{base_url}}/admin/moderation/tasks/place/1/retry",
               "host": ["{{base_url}}"],
-              "path": ["admin", "moderation", "tasks", "place", ":taskId", "retry"],
-              "variable": [
-                {
-                  "key": "taskId",
-                  "value": "1"
-                }
-              ]
+              "path": ["admin", "moderation", "tasks", "place", "1", "retry"]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "console.log('✓ Place task retry initiated');"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Dismiss Place Task",
@@ -1140,17 +1437,25 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/admin/moderation/tasks/place:taskId",
+              "raw": "{{base_url}}/admin/moderation/tasks/place1",
               "host": ["{{base_url}}"],
-              "path": ["admin", "moderation", "tasks", "place:taskId"],
-              "variable": [
-                {
-                  "key": "taskId",
-                  "value": "1"
-                }
-              ]
+              "path": ["admin", "moderation", "tasks", "place1"]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "console.log('✓ Place task dismissed');"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Get Failed AI Tasks",
@@ -1172,7 +1477,26 @@
                 }
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is paginated', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('content');",
+                  "});",
+                  "",
+                  "console.log('✓ Failed AI tasks retrieved');"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Retry AI Task",
@@ -1180,17 +1504,25 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/admin/moderation/tasks/ai/:taskId/retry",
+              "raw": "{{base_url}}/admin/moderation/tasks/ai/1/retry",
               "host": ["{{base_url}}"],
-              "path": ["admin", "moderation", "tasks", "ai", ":taskId", "retry"],
-              "variable": [
-                {
-                  "key": "taskId",
-                  "value": "1"
-                }
-              ]
+              "path": ["admin", "moderation", "tasks", "ai", "1", "retry"]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "console.log('✓ AI task retry initiated');"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Dismiss AI Task",
@@ -1198,17 +1530,25 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/admin/moderation/tasks/ai/:taskId",
+              "raw": "{{base_url}}/admin/moderation/tasks/ai/1",
               "host": ["{{base_url}}"],
-              "path": ["admin", "moderation", "tasks", "ai", ":taskId"],
-              "variable": [
-                {
-                  "key": "taskId",
-                  "value": "1"
-                }
-              ]
+              "path": ["admin", "moderation", "tasks", "ai", "1"]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "console.log('✓ AI task dismissed');"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -1235,7 +1575,32 @@
                 }
               ]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is paginated', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('content');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.content && jsonData.content.length > 0) {",
+                  "        pm.collectionVariables.set('appeal_id', jsonData.content[0].id);",
+                  "        console.log('✓ Found ' + jsonData.content.length + ' appeals');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Resolve Appeal",
@@ -1249,20 +1614,38 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"adminNotes\": \"Appeal reviewed and approved\"\n}"
+              "raw": "{\n  \"adminNotes\": \"Appeal reviewed and approved at {{$timestamp}}\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/appeal/admin/:id/resolve",
+              "raw": "{{base_url}}/appeal/admin/{{appeal_id}}/resolve",
               "host": ["{{base_url}}"],
-              "path": ["appeal", "admin", ":id", "resolve"],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
-              ]
+              "path": ["appeal", "admin", "{{appeal_id}}", "resolve"]
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "console.log('✓ Appeal resolved successfully');"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('appeal_id')) {",
+                  "    console.warn('⚠ appeal_id not set.');",
+                  "}"
+                ]
+              }
+            }
+          ]
         }
       ]
     }
