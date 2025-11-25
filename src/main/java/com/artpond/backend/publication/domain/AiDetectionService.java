@@ -1,7 +1,7 @@
 package com.artpond.backend.publication.domain;
 
 import com.artpond.backend.image.domain.ImageService;
-import com.artpond.backend.publication.domain.MediaType; // Asegúrate de tener este import
+import com.artpond.backend.publication.domain.PubType; // Asegúrate de tener este import
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,14 +28,14 @@ public class AiDetectionService {
     @Value("${app.python.command:python3}")
     private String pythonCommand;
 
-    public boolean analyzeImage(Long publicationId, String imageKey, MediaType type) {
+    public boolean analyzeImage(Long publicationId, String imageKey, PubType type) {
         Path tempFile = null;
         try {
             byte[] imageBytes = imageService.downloadCleanImage(imageKey, ""); 
             tempFile = Files.createTempFile("ai-check-" + publicationId, ".tmp");
             Files.write(tempFile, imageBytes);
 
-            String scriptName = (type == MediaType.PHOTOGRAPHY) ? "detect_photo.py" : "detect_illustration.py";
+            String scriptName = (type == PubType.PHOTOGRAPHY) ? "detect_photo.py" : "detect_illustration.py";
             File scriptFile = new File(scriptsPath, scriptName);
             
             if (!scriptFile.exists()) {

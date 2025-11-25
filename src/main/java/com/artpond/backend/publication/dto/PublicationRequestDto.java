@@ -6,7 +6,7 @@ import lombok.Data;
 
 import java.util.List;
 
-import com.artpond.backend.publication.domain.MediaType;
+import com.artpond.backend.publication.domain.PubType;
 
 @Data
 public class PublicationRequestDto {
@@ -18,7 +18,7 @@ public class PublicationRequestDto {
     @NotNull
     private Boolean machineGenerated; // No incluira el tag de ia, pero el sistema igualmente va a pasar por una cola de revisión.
     @NotNull(message = "Debes especificar el tipo de medio.")
-    private MediaType mediaType;
+    private PubType pubType;
 
     @Size(min=0, max=30, message="No puedes tener más de 30 etiquetas.")
     private List<String> tags;

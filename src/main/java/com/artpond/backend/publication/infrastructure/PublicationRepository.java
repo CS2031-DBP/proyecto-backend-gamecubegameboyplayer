@@ -1,5 +1,6 @@
 package com.artpond.backend.publication.infrastructure;
 
+import com.artpond.backend.publication.domain.PubType;
 import com.artpond.backend.publication.domain.Publication;
 import com.artpond.backend.tag.domain.Tag;
 import org.springframework.data.domain.Page;
@@ -19,4 +20,11 @@ public interface PublicationRepository extends JpaRepository<Publication, Long> 
     Page<Publication> findByPlace_IdAndContentWarningFalseOrderByCreationDate(Long placeId, Pageable pageable);
 
     Long countByPlace_IdAndModeratedIsFalse(Long placeId);
+
+    Page<Publication> findByPubType(PubType pubType, Pageable pageable);
+
+    Page<Publication> findByPubTypeAndContentWarningFalse(PubType pubType, Pageable pageable);
+
+    Page<Publication> findByPubTypeNot(PubType pubType, Pageable pageable);
+    Page<Publication> findByPubTypeNotAndContentWarningFalse(PubType pubType, Pageable pageable);
 }

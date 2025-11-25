@@ -136,7 +136,7 @@ public class PublicationEventHandler {
             boolean isAi = aiDetectionService.analyzeImage(
                 event.getPublicationId(), 
                 imageKey, 
-                event.getMediaType()
+                event.getPubType()
             );
 
             if (isAi) {
@@ -151,7 +151,7 @@ public class PublicationEventHandler {
             log.error("Async AI Analysis failed", e);
             FailedAiTask failure = new FailedAiTask();
             failure.setPublicationId(event.getPublicationId());
-            failure.setMediaType(event.getMediaType());
+            failure.setPubType(event.getPubType());
             failure.setErrorMessage(e.getMessage() != null ? e.getMessage() : "Unknown error");
             failure.setFailedAt(LocalDateTime.now());
             

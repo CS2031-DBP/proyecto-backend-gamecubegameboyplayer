@@ -1,6 +1,6 @@
 package com.artpond.backend.publication.dto;
 
-import com.artpond.backend.publication.domain.MediaType;
+import com.artpond.backend.publication.domain.PubType;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 public class FailedAiTaskDto {
     private Long id;
     private Long publicationId;
-    private MediaType mediaType;
+    private PubType pubType;
     private String errorMessage;
     private LocalDateTime failedAt;
 }

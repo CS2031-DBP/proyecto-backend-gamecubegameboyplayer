@@ -1,6 +1,7 @@
 package com.artpond.backend.publication.domain;
 
-public enum MediaType {
+public enum PubType {
     PHOTOGRAPHY,
-    ILLUSTRATION
+    ILLUSTRATION,
+    TEXT
 }

@@ -1,5 +1,6 @@
 package com.artpond.backend.publication.application;
 
+import com.artpond.backend.publication.domain.PubType;
 import com.artpond.backend.publication.domain.PublicationService;
 import com.artpond.backend.publication.dto.PublicationCreatedDto;
 import com.artpond.backend.publication.dto.PublicationRequestDto;
@@ -31,7 +32,7 @@ public class PublicationController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PublicationCreatedDto> createPublication(
             @RequestPart("data") @Valid PublicationRequestDto dto,
-            @RequestPart("images") List<MultipartFile> images,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images, 
             @AuthenticationPrincipal User userDetails) {
         
         PublicationCreatedDto createdPublication = publicationService.createPublication(dto, images, userDetails.getUsername());
@@ -39,8 +40,11 @@ public class PublicationController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<PublicationResponseDto>> getAllPosts(Pageable pageable, @AuthenticationPrincipal User userDetails) {
-        return ResponseEntity.ok(publicationService.getAllPublications(pageable, userDetails));
+    public ResponseEntity<Page<PublicationResponseDto>> getAllPosts(
+            Pageable pageable, 
+            @AuthenticationPrincipal User userDetails,
+            @RequestParam(required = false) PubType pubType) {
+        return ResponseEntity.ok(publicationService.getAllPublications(pageable, userDetails, pubType));
     }
 
     @GetMapping("/{id}")

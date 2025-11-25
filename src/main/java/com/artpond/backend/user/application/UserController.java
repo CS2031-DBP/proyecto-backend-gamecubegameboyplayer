@@ -11,7 +11,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.Map;
 
 import org.modelmapper.ModelMapper;
-import org.springframework.http.MediaType;
+import org.springframework.http.PubType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -36,7 +36,7 @@ public class UserController {
         return ResponseEntity.ok(modelMapper.map(userService.getUserByUsername(username), UserDetailsDto.class));
     }
 
-    @PatchMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PatchMapping(value = "/{id}", consumes = PubType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserResponseDto> patchUser(
             @PathVariable Long id,

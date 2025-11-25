@@ -84,7 +84,7 @@ public class Publication {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false) // obligatorio pq se tiene que definir que modelo va a evaluar la publicacion
-    private MediaType mediaType = MediaType.ILLUSTRATION;
+    private PubType pubType = PubType.ILLUSTRATION;
 
     @Column(nullable = false)
     private Boolean manuallyVerified = false;

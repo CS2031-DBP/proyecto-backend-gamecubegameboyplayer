@@ -17,7 +17,7 @@ public class FailedAiTask {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private MediaType mediaType;
+    private PubType pubType;
 
     @Column(length = 1000)
     private String errorMessage;

@@ -75,7 +75,7 @@ public class PublicationService {
         dto.setMachineGenerated(pub.getMachineGenerated());
         dto.setCreationDate(pub.getCreationDate());
         dto.setAuthor(modelMapper.map(pub.getAuthor(), PublicUserDto.class));
-        
+
         dto.setImages(pub.getImages().stream().map(img -> {
             ImageResponseDto imgDto = new ImageResponseDto();
             imgDto.setId(img.getId());
@@ -92,51 +92,58 @@ public class PublicationService {
             }
             return imgDto;
         }).collect(toList()));
-        
+
         dto.setTags(
-            pub.getTags().stream()
-                .map(tg -> modelMapper.map(tg, TagsResponseDto.class))
-                .collect(toList())
-        );
-        
-        // el lugar puede ser nulo, mientras que no este procesado o no se haya etiqutado
-        dto.setPlace(pub.getPlace() != null ? 
-            modelMapper.map(pub.getPlace(), PlaceDataDto.class) : null);
-        
+                pub.getTags().stream()
+                        .map(tg -> modelMapper.map(tg, TagsResponseDto.class))
+                        .collect(toList()));
+
+        // el lugar puede ser nulo, mientras que no este procesado o no se haya
+        // etiqutado
+        dto.setPlace(pub.getPlace() != null ? modelMapper.map(pub.getPlace(), PlaceDataDto.class) : null);
+
         return dto;
     }
 
     @Transactional
-    public PublicationCreatedDto createPublication(PublicationRequestDto dto, List<MultipartFile> imageFiles, String username) {
-        
-        if (imageFiles == null || imageFiles.isEmpty()) {
-            throw new PublicationCreationException("Se requiere almenos una imagen para subir una publicación");
-        }
-
+    public PublicationCreatedDto createPublication(PublicationRequestDto dto, List<MultipartFile> imageFiles,
+            String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException());
 
-        int maxImagesAllowed = (user.getRole() == Role.ARTIST) 
-                               ? ImageService.MAX_IMAGES_ARTIST 
-                               : ImageService.MAX_IMAGES_USER;
+        if (dto.getPubType() == PubType.TEXT) {
+            if (imageFiles != null && !imageFiles.isEmpty()) {
+                throw new BadRequestException("Los posts de comunidad (TEXT) no pueden llevar imágenes.");
+            }
+            if (dto.getDescription() == null || dto.getDescription().trim().isEmpty()) {
+                throw new BadRequestException("La descripción no puede estar vacía en un post de texto.");
+            }
+            dto.setMachineGenerated(false);
+            dto.setHideCleanImage(false);
+        } else {
+            if (imageFiles == null || imageFiles.isEmpty()) {
+                throw new PublicationCreationException("Se requiere al menos una imagen para subir una obra de arte.");
+            }
 
-        if (imageFiles.size() > maxImagesAllowed) {
-            throw new PublicationCreationException(
-                String.format("Tu rol actual (%s) solo permite subir hasta %d imágenes.", 
-                user.getRole(), maxImagesAllowed)
-            );
-        }
+            int maxImagesAllowed = (user.getRole() == Role.ARTIST)
+                    ? ImageService.MAX_IMAGES_ARTIST
+                    : ImageService.MAX_IMAGES_USER;
+            if (imageFiles.size() > maxImagesAllowed) {
+                throw new PublicationCreationException(
+                        String.format("Tu rol actual (%s) solo permite subir hasta %d imágenes.", user.getRole(),
+                                maxImagesAllowed));
+            }
 
-        int maxTags = user.getRole() == Role.ARTIST ? 30 : 15;
-        if (dto.getTags() != null && dto.getTags().size() > maxTags) {
-             throw new BadRequestException(
-                String.format("Tu rol actual (%s) solo permite %d etiquetas.", user.getRole(), maxTags)
-            );
-        }
+            int maxTags = user.getRole() == Role.ARTIST ? 30 : 15;
+            if (dto.getTags() != null && dto.getTags().size() > maxTags) {
+                throw new BadRequestException(
+                        String.format("Tu rol actual (%s) solo permite %d etiquetas.", user.getRole(), maxTags));
+            }
 
-        if ((dto.getOsmId() != null && dto.getOsmType() == null) ||
-                (dto.getOsmId() == null && dto.getOsmType() != null)) {
-            throw new PublicationCreationException("osmId and osmType must both be provided or both be null");
+            if ((dto.getOsmId() != null && dto.getOsmType() == null) ||
+                    (dto.getOsmId() == null && dto.getOsmType() != null)) {
+                throw new PublicationCreationException("osmId and osmType must both be provided or both be null");
+            }
         }
 
         Publication publication = new Publication();
@@ -145,50 +152,54 @@ public class PublicationService {
         publication.setContentWarning(dto.getContentWarning() != null ? dto.getContentWarning() : false);
         publication.setMachineGenerated(dto.getMachineGenerated() != null ? dto.getMachineGenerated() : false);
         publication.setHideCleanImage(dto.getHideCleanImage() != null ? dto.getHideCleanImage() : false);
-        publication.setMediaType(dto.getMediaType());
+        publication.setPubType(dto.getPubType());
 
-        if (Boolean.TRUE.equals(dto.getMachineGenerated())) {
+        if (dto.getMachineGenerated()) {
             publication.setMachineGenerated(true);
             publication.setManuallyVerified(true);
         } else {
             publication.setMachineGenerated(false);
         }
 
-        List<Tag> tagEntities = dto.getTags().stream()
-                .map(tagName -> tagRepository.findByName(tagName)
-                        .orElseGet(() -> {
-                            Tag newTag = new Tag();
-                            newTag.setName(tagName);
-                            return tagRepository.save(newTag);
-                        }))
-                .collect(toList());
-        publication.setTags(tagEntities);
+        if (dto.getPubType() != PubType.TEXT) {
+            List<Tag> tagEntities = dto.getTags().stream()
+                    .map(tagName -> tagRepository.findByName(tagName)
+                            .orElseGet(() -> {
+                                Tag newTag = new Tag();
+                                newTag.setName(tagName);
+                                return tagRepository.save(newTag);
+                            }))
+                    .collect(toList());
+            publication.setTags(tagEntities);
+        }
         Publication savedPublication = publicationRepository.save(publication);
 
-        try {
-            List<ImageUploadDto> uploadResults = imageService.uploadImagesForPublication(
-                    imageFiles, username, savedPublication.getId(), user.getRole());
+        if (dto.getPubType() != PubType.TEXT && imageFiles != null) {
+            try {
+                List<ImageUploadDto> uploadResults = imageService.uploadImagesForPublication(
+                        imageFiles, username, savedPublication.getId(), user.getRole());
 
-            List<Image> imageEntities = uploadResults.stream()
-                    .map(imgResult -> {
-                        Image img = new Image();
-                        img.setUrl(imgResult.getPublicUrl());
-                        img.setCleanFileKey(imgResult.getCleanFileKey());
-                        img.setPublicFileKey(imgResult.getPublicFileKey());
-                        img.setPublication(savedPublication);
-                        return img;
-                    })
-                    .collect(toList());
+                List<Image> imageEntities = uploadResults.stream()
+                        .map(imgResult -> {
+                            Image img = new Image();
+                            img.setUrl(imgResult.getPublicUrl());
+                            img.setCleanFileKey(imgResult.getCleanFileKey());
+                            img.setPublicFileKey(imgResult.getPublicFileKey());
+                            img.setPublication(savedPublication);
+                            return img;
+                        })
+                        .collect(toList());
 
-            savedPublication.setImages(imageEntities);
-            publicationRepository.save(savedPublication);
+                savedPublication.setImages(imageEntities);
+                publicationRepository.save(savedPublication);
 
-        } catch (IOException | IllegalArgumentException e) {
-            publicationRepository.delete(savedPublication);
-            throw new PublicationCreationException("No se pudo subir imagen: " + e.getMessage());
+            } catch (IOException | IllegalArgumentException e) {
+                publicationRepository.delete(savedPublication);
+                throw new PublicationCreationException("No se pudo subir imagen: " + e.getMessage());
+            }
         }
 
-        if (dto.getOsmId() != null && dto.getOsmType() != null) {
+        if (dto.getPubType() != PubType.TEXT && dto.getOsmId() != null && dto.getOsmType() != null) {
             eventPublisher.publishEvent(new PublicationCreatedEvent(
                     this,
                     savedPublication.getId(),
@@ -196,25 +207,32 @@ public class PublicationService {
                     dto.getOsmType()));
         }
 
-        if (dto.getMachineGenerated() != true) {
+        if (dto.getMachineGenerated() != true && dto.getPubType() != PubType.TEXT) {
             eventPublisher.publishEvent(new AiAnalysisRequestedEvent(
-                    this, 
+                    this,
                     savedPublication.getId(),
-                    dto.getMediaType()
-            ));
+                    dto.getPubType()));
         }
 
         return modelMapper.map(savedPublication, PublicationCreatedDto.class);
     }
 
-    public Page<PublicationResponseDto> getAllPublications(Pageable pageable, User currentUser) {
+    public Page<PublicationResponseDto> getAllPublications(Pageable pageable, User currentUser, PubType pubType) {
         boolean canSeeExplicit = canSeeExplicitContent(currentUser);
-        
         Page<Publication> page;
-        if (canSeeExplicit) {
-            page = publicationRepository.findAll(pageable);
+
+        if (pubType != null) {
+            if (canSeeExplicit) {
+                page = publicationRepository.findByPubType(pubType, pageable);
+            } else {
+                page = publicationRepository.findByPubTypeAndContentWarningFalse(pubType, pageable);
+            }
         } else {
-            page = publicationRepository.findByContentWarningFalse(pageable);
+            if (canSeeExplicit) {
+                page = publicationRepository.findByPubTypeNot(PubType.TEXT, pageable);
+            } else {
+                page = publicationRepository.findByPubTypeNotAndContentWarningFalse(PubType.TEXT, pageable);
+            }
         }
         
         return page.map(pub -> toDto(pub, currentUser));
@@ -298,16 +316,15 @@ public class PublicationService {
         }
 
         if (isAdmin && !isOwner) {
-            String preview = publication.getDescription() != null 
-                    ? publication.getDescription().substring(0, Math.min(publication.getDescription().length(), 30)) 
+            String preview = publication.getDescription() != null
+                    ? publication.getDescription().substring(0, Math.min(publication.getDescription().length(), 30))
                     : "Publicación #" + publication.getId();
 
             eventPublisher.publishEvent(new PublicationModeratedEvent(
-                this, 
-                publication.getAuthor(), 
-                preview, 
-                "Contenido eliminado por normas de la comunidad."
-            ));
+                    this,
+                    publication.getAuthor(),
+                    preview,
+                    "Contenido eliminado por normas de la comunidad."));
         }
 
         List<String> cleanKeys = publication.getImages().stream().map(Image::getCleanFileKey).collect(toList());
@@ -324,7 +341,7 @@ public class PublicationService {
     public void toggleHeart(Long publicationId, Long userId) {
         Publication publication = publicationRepository.findById(publicationId)
                 .orElseThrow(() -> new PublicationNotFoundException());
-        
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException());
 
@@ -342,7 +359,7 @@ public class PublicationService {
 
     public Page<FailedPlaceTaskDto> getFailedPlaceTasks(Pageable pageable) {
         return failedPlaceRepository.findAll(pageable)
-            .map(task -> modelMapper.map(task, FailedPlaceTaskDto.class));
+                .map(task -> modelMapper.map(task, FailedPlaceTaskDto.class));
     }
 
     @Transactional
@@ -355,8 +372,7 @@ public class PublicationService {
                 task.getPublicationId(),
                 task.getOsmId(),
                 task.getOsmType(),
-                1
-        ));
+                1));
         failedPlaceRepository.delete(task);
     }
 
@@ -373,12 +389,11 @@ public class PublicationService {
     public void retryFailedAiTask(Long taskId) {
         FailedAiTask task = failedAiRepository.findById(taskId)
                 .orElseThrow(() -> new NotFoundException("AI Task not found"));
-                
+
         eventPublisher.publishEvent(new AiAnalysisRequestedEvent(
                 this,
                 task.getPublicationId(),
-                task.getMediaType()
-        ));
+                task.getPubType()));
 
         failedAiRepository.delete(task);
     }
