@@ -1,9 +1,29 @@
-FROM eclipse-temurin:21-jdk AS build
+FROM eclipse-temurin:21-jdk-jammy AS build
 WORKDIR /app
-COPY . .
+
+COPY .mvn/ .mvn
+COPY mvnw pom.xml ./
+
+RUN chmod +x mvnw
+RUN ./mvnw dependency:go-offline
+
+COPY src ./src
+COPY scripts ./scripts 
+
 RUN ./mvnw clean package -DskipTests
 
-FROM eclipse-temurin:21-jdk
+FROM eclipse-temurin:21-jdk-jammy
 WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install -y python3 && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY scripts/ai /app/scripts/ai
+
 COPY --from=build /app/target/backend-*.jar app.jar
+
+ENV APP_SCRIPTS_PATH=/app/scripts/ai/
+ENV APP_PYTHON_COMMAND=python3
+
 CMD ["java", "-jar", "app.jar"]
