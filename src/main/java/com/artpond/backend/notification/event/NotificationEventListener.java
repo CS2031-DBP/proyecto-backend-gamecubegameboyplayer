@@ -63,9 +63,9 @@ public class NotificationEventListener {
     public void handlePublicationModerated(PublicationModeratedEvent event) {
         notificationService.createNotification(
             event.getAuthor(),
-            null, // Actor null = Sistema
+            null,
             NotificationType.CONTENT_MODERATED,
-            null, // No hay ID de referencia porque el post fue borrado
+            null,
             "Tu publicación '" + event.getPostTitle() + "' ha sido eliminada por un moderador."
         );
     }
