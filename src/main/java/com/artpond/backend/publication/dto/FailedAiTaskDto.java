@@ -1,14 +1,14 @@
 package com.artpond.backend.publication.dto;
 
+import com.artpond.backend.publication.domain.MediaType;
 import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class FailedTaskDto {
+public class FailedAiTaskDto {
     private Long id;
     private Long publicationId;
-    private Long osmId;
-    private String osmType;
+    private MediaType mediaType;
     private String errorMessage;
     private LocalDateTime failedAt;
 }

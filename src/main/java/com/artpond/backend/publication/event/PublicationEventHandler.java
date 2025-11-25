@@ -3,8 +3,11 @@ package com.artpond.backend.publication.event;
 import com.artpond.backend.map.domain.MapService;
 import com.artpond.backend.map.domain.Place;
 import com.artpond.backend.map.exception.InvalidPlaceException;
+import com.artpond.backend.publication.domain.AiDetectionService;
+import com.artpond.backend.publication.domain.FailedAiTask;
 import com.artpond.backend.publication.domain.FailedPlaceTask;
 import com.artpond.backend.publication.domain.Publication;
+import com.artpond.backend.publication.infrastructure.FailedAiRepository;
 import com.artpond.backend.publication.infrastructure.FailedPlaceRepository;
 import com.artpond.backend.publication.infrastructure.PublicationRepository;
 import io.github.bucket4j.Bucket;
@@ -23,8 +26,10 @@ import java.time.LocalDateTime;
 @Slf4j
 public class PublicationEventHandler {
     private final MapService mapService;
+    private final AiDetectionService aiDetectionService;
     private final PublicationRepository publicationRepository;
     private final FailedPlaceRepository failedPlaceRepository;
+    private final FailedAiRepository failedAiRepository;
     private final ApplicationEventPublisher eventPublisher;
     
     private static final int MAX_RETRY_ATTEMPTS = 3;
@@ -112,6 +117,45 @@ public class PublicationEventHandler {
             failure.setErrorMessage(cause.getMessage());
             failure.setFailedAt(LocalDateTime.now());
             failedPlaceRepository.save(failure);
+        }
+    }
+
+    @Async("placeProcessingExecutor")
+    @EventListener
+    public void handleAiAnalysis(AiAnalysisRequestedEvent event) {
+        log.info("Starting async AI research for publication {}", event.getPublicationId());
+
+        try {
+            Publication publication = publicationRepository.findById(event.getPublicationId())
+                    .orElseThrow(() -> new RuntimeException("Publication not found"));
+
+            if (publication.getImages().isEmpty()) return;
+            
+            String imageKey = publication.getImages().get(0).getCleanFileKey();
+
+            boolean isAi = aiDetectionService.analyzeImage(
+                event.getPublicationId(), 
+                imageKey, 
+                event.getMediaType()
+            );
+
+            if (isAi) {
+                log.info("publication {} did not pick up the pencil :C", event.getPublicationId());
+                publication.setMachineGenerated(true);
+                publicationRepository.save(publication);
+            } else {
+                log.info("publication {} picked up the pencil :D", event.getPublicationId());
+            }
+
+        } catch (Exception e) {
+            log.error("Async AI Analysis failed", e);
+            FailedAiTask failure = new FailedAiTask();
+            failure.setPublicationId(event.getPublicationId());
+            failure.setMediaType(event.getMediaType());
+            failure.setErrorMessage(e.getMessage() != null ? e.getMessage() : "Unknown error");
+            failure.setFailedAt(LocalDateTime.now());
+            
+            failedAiRepository.save(failure);
         }
     }
 }

@@ -5,5 +5,6 @@ public enum ReportReason {
     INAPPROPRIATE_CONTENT,
     HARASSMENT,
     COPYRIGHT,
+    UNMARKED_AI,
     OTHER
 }

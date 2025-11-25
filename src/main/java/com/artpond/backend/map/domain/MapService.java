@@ -29,6 +29,7 @@ import com.artpond.backend.map.infrastructure.MapRepository;
 import com.artpond.backend.publication.domain.Publication;
 import com.artpond.backend.publication.dto.PublicationResponseDto;
 import com.artpond.backend.publication.infrastructure.PublicationRepository;
+import com.artpond.backend.user.domain.User;
 
 import lombok.RequiredArgsConstructor;
 import java.util.List;
@@ -46,8 +47,14 @@ public class MapService {
     private final ModelMapper modelMapper;
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
-    public Page<PublicationResponseDto> getPlacePosts(Long placeId, Pageable pageable) {
-        Page<Publication> posts = publicationRepository.findByPlace_IdOrderByCreationDate(placeId, pageable);
+    public Page<PublicationResponseDto> getPlacePosts(Long placeId, Pageable pageable, User currentUser) {
+        boolean canSeeExplicit = currentUser != null && Boolean.TRUE.equals(currentUser.getShowExplicit());
+        Page<Publication> posts;
+        if (canSeeExplicit) {
+            posts = publicationRepository.findByPlace_IdOrderByCreationDate(placeId, pageable);
+        } else {
+            posts = publicationRepository.findByPlace_IdAndContentWarningFalseOrderByCreationDate(placeId, pageable);
+        }
         return posts.map(publication -> modelMapper.map(publication, PublicationResponseDto.class));
     }
 

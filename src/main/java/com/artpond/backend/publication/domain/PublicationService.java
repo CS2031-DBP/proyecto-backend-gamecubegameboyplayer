@@ -11,6 +11,7 @@ import com.artpond.backend.map.dto.PlaceDataDto;
 import com.artpond.backend.publication.dto.PublicationCreatedDto;
 import com.artpond.backend.publication.dto.PublicationRequestDto;
 import com.artpond.backend.publication.dto.PublicationResponseDto;
+import com.artpond.backend.publication.event.AiAnalysisRequestedEvent;
 import com.artpond.backend.publication.event.PublicationCreatedEvent;
 import com.artpond.backend.publication.exception.PublicationCreationException;
 import com.artpond.backend.publication.exception.PublicationNotFoundException;
@@ -23,11 +24,12 @@ import com.artpond.backend.user.domain.User;
 import com.artpond.backend.user.dto.PublicUserDto;
 import com.artpond.backend.user.exception.UserNotFoundException;
 import com.artpond.backend.user.infrastructure.UserRepository;
+import com.artpond.backend.publication.infrastructure.FailedAiRepository;
 import com.artpond.backend.publication.infrastructure.FailedPlaceRepository;
-import com.artpond.backend.publication.dto.FailedTaskDto;
+import com.artpond.backend.publication.dto.FailedAiTaskDto;
+import com.artpond.backend.publication.dto.FailedPlaceTaskDto;
 import com.artpond.backend.publication.event.PublicationLikedEvent;
 import com.artpond.backend.publication.event.PublicationModeratedEvent;
-import com.artpond.backend.user.domain.Role;
 
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -47,14 +49,15 @@ import static java.util.stream.Collectors.toList;
 @Service
 @RequiredArgsConstructor
 public class PublicationService {
-
-    private final PublicationRepository publicationRepository;
     private final ModelMapper modelMapper;
     private final UserRepository userRepository;
     private final TagRepository tagRepository;
     private final ImageService imageService;
     private final ApplicationEventPublisher eventPublisher;
+
+    private final PublicationRepository publicationRepository;
     private final FailedPlaceRepository failedPlaceRepository;
+    private final FailedAiRepository failedAiRepository;
 
     public Publication findPublicationById(Long id) {
         return publicationRepository.findById(id).orElseThrow();
@@ -142,6 +145,14 @@ public class PublicationService {
         publication.setContentWarning(dto.getContentWarning() != null ? dto.getContentWarning() : false);
         publication.setMachineGenerated(dto.getMachineGenerated() != null ? dto.getMachineGenerated() : false);
         publication.setHideCleanImage(dto.getHideCleanImage() != null ? dto.getHideCleanImage() : false);
+        publication.setMediaType(dto.getMediaType());
+
+        if (Boolean.TRUE.equals(dto.getMachineGenerated())) {
+            publication.setMachineGenerated(true);
+            publication.setManuallyVerified(true);
+        } else {
+            publication.setMachineGenerated(false);
+        }
 
         List<Tag> tagEntities = dto.getTags().stream()
                 .map(tagName -> tagRepository.findByName(tagName)
@@ -185,18 +196,48 @@ public class PublicationService {
                     dto.getOsmType()));
         }
 
+        if (dto.getMachineGenerated() != true) {
+            eventPublisher.publishEvent(new AiAnalysisRequestedEvent(
+                    this, 
+                    savedPublication.getId(),
+                    dto.getMediaType()
+            ));
+        }
+
         return modelMapper.map(savedPublication, PublicationCreatedDto.class);
     }
 
     public Page<PublicationResponseDto> getAllPublications(Pageable pageable, User currentUser) {
-        return publicationRepository.findAll(pageable).map(pub -> toDto(pub, currentUser));
+        boolean canSeeExplicit = canSeeExplicitContent(currentUser);
+        
+        Page<Publication> page;
+        if (canSeeExplicit) {
+            page = publicationRepository.findAll(pageable);
+        } else {
+            page = publicationRepository.findByContentWarningFalse(pageable);
+        }
+        
+        return page.map(pub -> toDto(pub, currentUser));
     }
 
     public Page<PublicationResponseDto> getPublicationsByTag(String tagName, Pageable pageable, User currentUser) {
         Tag tag = tagRepository.findByName(tagName)
                 .orElseThrow(() -> new NotFoundException("Tag does not exist"));
 
-        return publicationRepository.findByTagsContaining(tag, pageable).map(this::toDto);
+        boolean canSeeExplicit = canSeeExplicitContent(currentUser);
+
+        Page<Publication> page;
+        if (canSeeExplicit) {
+            page = publicationRepository.findByTagsContaining(tag, pageable);
+        } else {
+            page = publicationRepository.findByTagsContainingAndContentWarningFalse(tag, pageable);
+        }
+
+        return page.map(pub -> toDto(pub, currentUser)); // toDto necesita "this::" si usas method reference, o lambda
+    }
+
+    private boolean canSeeExplicitContent(User user) {
+        return user != null && Boolean.TRUE.equals(user.getShowExplicit());
     }
 
     public PublicationResponseDto getPublicationById(Long id, User currentUser) {
@@ -299,9 +340,9 @@ public class PublicationService {
 
     // task systemo
 
-    public Page<FailedTaskDto> getFailedPlaceTasks(Pageable pageable) {
+    public Page<FailedPlaceTaskDto> getFailedPlaceTasks(Pageable pageable) {
         return failedPlaceRepository.findAll(pageable)
-            .map(task -> modelMapper.map(task, FailedTaskDto.class));
+            .map(task -> modelMapper.map(task, FailedPlaceTaskDto.class));
     }
 
     @Transactional
@@ -321,5 +362,28 @@ public class PublicationService {
 
     public void deleteFailedTask(Long taskId) {
         failedPlaceRepository.deleteById(taskId);
+    }
+
+    public Page<FailedAiTaskDto> getFailedAiTasks(Pageable pageable) {
+        return failedAiRepository.findAll(pageable)
+                .map(task -> modelMapper.map(task, FailedAiTaskDto.class));
+    }
+
+    @Transactional
+    public void retryFailedAiTask(Long taskId) {
+        FailedAiTask task = failedAiRepository.findById(taskId)
+                .orElseThrow(() -> new NotFoundException("AI Task not found"));
+                
+        eventPublisher.publishEvent(new AiAnalysisRequestedEvent(
+                this,
+                task.getPublicationId(),
+                task.getMediaType()
+        ));
+
+        failedAiRepository.delete(task);
+    }
+
+    public void deleteFailedAiTask(Long taskId) {
+        failedAiRepository.deleteById(taskId);
     }
 }

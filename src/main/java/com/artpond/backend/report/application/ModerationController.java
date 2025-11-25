@@ -4,7 +4,8 @@ import com.artpond.backend.report.domain.Report;
 import com.artpond.backend.report.domain.ReportService;
 import com.artpond.backend.report.domain.ReportStatus;
 import com.artpond.backend.publication.domain.PublicationService;
-import com.artpond.backend.publication.dto.FailedTaskDto;
+import com.artpond.backend.publication.dto.FailedAiTaskDto;
+import com.artpond.backend.publication.dto.FailedPlaceTaskDto;
 import com.artpond.backend.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -44,20 +45,37 @@ public class ModerationController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/tasks/failed")
-    public ResponseEntity<Page<FailedTaskDto>> getFailedTasks(Pageable pageable) {
+    @GetMapping("/tasks/place/failed")
+    public ResponseEntity<Page<FailedPlaceTaskDto>> getFailedTasks(Pageable pageable) {
         return ResponseEntity.ok(publicationService.getFailedPlaceTasks(pageable));
     }
 
-    @PostMapping("/tasks/{taskId}/retry")
+    @PostMapping("/tasks/place/{taskId}/retry")
     public ResponseEntity<Void> retryTask(@PathVariable Long taskId) {
         publicationService.retryFailedTask(taskId);
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/tasks/{taskId}")
+    @DeleteMapping("/tasks/place{taskId}")
     public ResponseEntity<Void> dismissTask(@PathVariable Long taskId) {
         publicationService.deleteFailedTask(taskId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/tasks/ai/failed")
+    public ResponseEntity<Page<FailedAiTaskDto>> getFailedAiTasks(Pageable pageable) {
+        return ResponseEntity.ok(publicationService.getFailedAiTasks(pageable));
+    }
+
+    @PostMapping("/tasks/ai/{taskId}/retry")
+    public ResponseEntity<Void> retryAiTask(@PathVariable Long taskId) {
+        publicationService.retryFailedAiTask(taskId);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/tasks/ai/{taskId}")
+    public ResponseEntity<Void> dismissAiTask(@PathVariable Long taskId) {
+        publicationService.deleteFailedAiTask(taskId);
         return ResponseEntity.noContent().build();
     }
 }

@@ -3,6 +3,7 @@ package com.artpond.backend.map.application;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,6 +14,8 @@ import com.artpond.backend.map.domain.MapService;
 import com.artpond.backend.map.dto.PlaceMapSummaryDto;
 import com.artpond.backend.map.dto.PlaceDataDto;
 import com.artpond.backend.publication.dto.PublicationResponseDto;
+import com.artpond.backend.user.domain.User;
+
 import lombok.RequiredArgsConstructor;
 import java.util.List;
 
@@ -36,9 +39,10 @@ public class MapController {
     @GetMapping("/{placeId}/posts")
     public ResponseEntity<Page<PublicationResponseDto>> getPostsForPlace(
             @PathVariable Long placeId,
-            Pageable pageable) {
+            Pageable pageable,
+            @AuthenticationPrincipal User user) {
                 
-        Page<PublicationResponseDto> posts = mapService.getPlacePosts(placeId, pageable);
+        Page<PublicationResponseDto> posts = mapService.getPlacePosts(placeId, pageable, user);
         return ResponseEntity.ok(posts);
     }
 
