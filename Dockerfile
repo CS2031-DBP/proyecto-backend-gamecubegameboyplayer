@@ -5,12 +5,9 @@ COPY .mvn/ .mvn
 COPY mvnw pom.xml ./
 RUN chmod +x mvnw
 
-RUN ./mvnw dependency:go-offline
-
 COPY src ./src
 COPY scripts ./scripts
 
-# Compilamos
 RUN ./mvnw clean package -DskipTests
 
 FROM eclipse-temurin:21-jre-jammy
@@ -21,8 +18,8 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-
 COPY scripts/ai/requirements.txt /app/scripts/ai/requirements.txt
+
 RUN pip3 install --no-cache-dir -r /app/scripts/ai/requirements.txt
 
 COPY scripts/ai /app/scripts/ai
