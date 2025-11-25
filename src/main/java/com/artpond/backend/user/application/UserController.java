@@ -1,5 +1,6 @@
 package com.artpond.backend.user.application;
 
+import com.artpond.backend.publication.dto.PublicationResponseDto;
 import com.artpond.backend.user.domain.User;
 import com.artpond.backend.user.domain.UserService;
 import com.artpond.backend.user.dto.PublicUserDto;
@@ -11,6 +12,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -62,5 +65,35 @@ public class UserController {
     @PreAuthorize("hasRole('USER') or hasRole('ARTIST')")
     public ResponseEntity<UserResponseDto> switchRole(@AuthenticationPrincipal User userDetails) {
         return ResponseEntity.ok(userService.switchUserRole(userDetails.getUserId()));
+    }
+
+    @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserResponseDto> uploadAvatar(
+            @RequestPart("image") MultipartFile image,
+            @AuthenticationPrincipal User userDetails) {
+        return ResponseEntity.ok(userService.updateAvatar(userDetails.getUserId(), image));
+    }
+
+    @PostMapping("/{id}/follow")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> toggleFollow(@PathVariable Long id, @AuthenticationPrincipal User userDetails) {
+        userService.toggleFollow(userDetails.getUserId(), id);
+        return ResponseEntity.ok().build();
+    }
+    
+    @PostMapping("/save/{publicationId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> toggleSavePost(@PathVariable Long publicationId, @AuthenticationPrincipal User userDetails) {
+        userService.toggleSavePublication(userDetails.getUserId(), publicationId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/saved")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<PublicationResponseDto>> getSavedPosts(
+            @AuthenticationPrincipal User userDetails, 
+            Pageable pageable) {
+        return ResponseEntity.ok(userService.getSavedPublications(userDetails.getUserId(), pageable));
     }
 }

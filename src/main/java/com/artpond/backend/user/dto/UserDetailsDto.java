@@ -12,4 +12,7 @@ import lombok.EqualsAndHashCode;
 public class UserDetailsDto extends PublicUserDto {
     private String description;
     private List<PublicationResponseDto> publications;
+    
+    private int followersCount;
+    private int followingCount;
 }

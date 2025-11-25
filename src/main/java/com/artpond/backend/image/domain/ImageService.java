@@ -39,6 +39,22 @@ public class ImageService {
     public static final int MAX_IMAGES_ARTIST = 5; // Antes era MAX_IMAGES
     public static final int MAX_IMAGES_USER = 3;
 
+    private static final String AVATAR_PREFIX = "avatars/";
+
+    public String uploadAvatar(MultipartFile file, Long userId) throws IOException {
+        String format = getImageFormat(file.getContentType());
+        String fileName = AVATAR_PREFIX + userId + "/" + System.currentTimeMillis() + "." + format;
+        
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(file.getSize());
+        metadata.setContentType(file.getContentType());
+        metadata.setHeader("x-amz-acl", "public-read"); // Hacerlo público
+
+        s3Client.putObject(bucketName, fileName, file.getInputStream(), metadata);
+
+        return s3Client.getUrl(bucketName, fileName).toString();
+    }
+
     public String generatePresignedUrl(String objectKey) {
         Date expiration = new Date();
         long expTimeMillis = expiration.getTime();

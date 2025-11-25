@@ -1,6 +1,7 @@
 package com.artpond.backend.user.domain;
 
 import com.artpond.backend.publication.domain.Publication;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -10,7 +11,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -41,6 +44,9 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Boolean showExplicit = false;
 
+    @Column(nullable = true)
+    private String profilePictureUrl;
+
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Publication> publications = new ArrayList<>();
@@ -52,6 +58,19 @@ public class User implements UserDetails {
             inverseJoinColumns = @JoinColumn(name = "publication_id")
     )
     private List<Publication> savedPublications = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+        name = "user_follows",
+        joinColumns = @JoinColumn(name = "follower_id"),
+        inverseJoinColumns = @JoinColumn(name = "followed_id")
+    )
+    @JsonIgnore
+    private Set<User> following = new HashSet<>();
+
+    @ManyToMany(mappedBy = "following")
+    @JsonIgnore
+    private Set<User> followers = new HashSet<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

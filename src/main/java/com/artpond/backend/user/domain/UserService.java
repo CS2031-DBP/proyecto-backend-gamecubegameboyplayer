@@ -7,7 +7,11 @@ import com.artpond.backend.definitions.exception.NotFoundException;
 import com.artpond.backend.image.domain.Image;
 import com.artpond.backend.image.domain.ImageService; 
 import com.artpond.backend.image.domain.WatermarkService;
+import com.artpond.backend.notification.domain.NotificationService;
+import com.artpond.backend.notification.domain.NotificationType;
 import com.artpond.backend.publication.domain.Publication;
+import com.artpond.backend.publication.dto.PublicationResponseDto;
+import com.artpond.backend.publication.infrastructure.PublicationRepository;
 import com.artpond.backend.user.dto.RegisterUserDto;
 import com.artpond.backend.user.dto.UserResponseDto;
 import com.artpond.backend.user.dto.UpdateUserDto; 
@@ -22,6 +26,8 @@ import java.util.List;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -41,8 +47,75 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
     private final WatermarkService watermarkService;
-    private final ImageService imageService; // Inyectamos ImageService
+    private final ImageService imageService;
     private final ApplicationEventPublisher eventPublisher;
+
+    private final NotificationService notificationService;
+    private final PublicationRepository publicationRepository;
+
+    @Transactional
+    public UserResponseDto updateAvatar(Long userId, MultipartFile file) {
+        User user = getUserById(userId);
+        try {
+            String avatarUrl = imageService.uploadAvatar(file, userId);
+            user.setProfilePictureUrl(avatarUrl);
+            return modelMapper.map(userRepository.save(user), UserResponseDto.class);
+        } catch (IOException e) {
+            throw new RuntimeException("Error al subir la imagen de perfil", e);
+        }
+    }
+
+    @Transactional
+    public void toggleFollow(Long followerId, Long followedId) {
+        if (followerId.equals(followedId)) {
+            throw new BadRequestException("No puedes seguirte a ti mismo.");
+        }
+
+        User follower = getUserById(followerId);
+        User followed = getUserById(followedId);
+
+        if (follower.getFollowing().contains(followed)) {
+            follower.getFollowing().remove(followed);
+            followed.getFollowers().remove(follower);
+        } else {
+            follower.getFollowing().add(followed);
+            followed.getFollowers().add(follower);
+
+            notificationService.createNotification(
+                followed,
+                follower,
+                NotificationType.WELCOME,
+                follower.getUserId(),
+                follower.getDisplayName() + " ha comenzado a seguirte."
+            );
+        }
+        userRepository.save(follower);
+        userRepository.save(followed);
+    }
+    
+    public boolean isFollowing(Long followerId, Long followedId) {
+        User follower = getUserById(followerId);
+        return follower.getFollowing().stream().anyMatch(u -> u.getUserId().equals(followedId));
+    }
+
+    @Transactional
+    public void toggleSavePublication(Long userId, Long publicationId) {
+        User user = getUserById(userId);
+        Publication publication = publicationRepository.findById(publicationId)
+                .orElseThrow(() -> new NotFoundException("Publicación no encontrada"));
+
+        if (user.getSavedPublications().contains(publication)) {
+            user.getSavedPublications().remove(publication);
+        } else {
+            user.getSavedPublications().add(publication);
+        }
+        userRepository.save(user);
+    }
+    
+    public Page<PublicationResponseDto> getSavedPublications(Long userId, Pageable pageable) {
+        return publicationRepository.findSavedPublicationsByUser(userId, pageable)
+                .map(pub -> modelMapper.map(pub, PublicationResponseDto.class));
+    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -132,8 +205,7 @@ public class UserService implements UserDetailsService {
     @Transactional
     public Void deleteUserById (Long id) {
         User user = userRepository.findById(id).orElseThrow(UserNotFoundException::new);
-        
-        // 1. Limpieza de S3: Iteramos publicaciones para borrar imágenes físicas
+
         List<Publication> publications = user.getPublications();
         for (Publication pub : publications) {
             List<String> cleanKeys = pub.getImages().stream().map(Image::getCleanFileKey).collect(toList());
@@ -141,10 +213,7 @@ public class UserService implements UserDetailsService {
             imageService.deleteMultipleImages(cleanKeys, publicKeys);
         }
 
-        // 2. Borrar marca de agua
         watermarkService.deleteUserWatermark(user.getUsername());
-        
-        // 3. Borrar usuario (Cascade borrará registros en DB)
         userRepository.deleteById(id);
         return null;
     }
