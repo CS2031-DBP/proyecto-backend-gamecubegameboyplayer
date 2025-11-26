@@ -15,6 +15,9 @@ public class FailedAiTask {
     @Column(nullable = false)
     private Long publicationId;
 
+    @Column(nullable = false)
+    private Long userId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PubType pubType;

@@ -1,10 +1,10 @@
 package com.artpond.backend.map.domain;
 
-import org.apache.http.client.HttpResponseException;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -72,7 +72,7 @@ public class MapService {
         return mapRepository.findPlacesInBoundingBox(minLat, minLon, maxLat, maxLon, MAX_RESULTS_LIMIT);
     }
 
-    @Transactional
+    @Cacheable(value = "places", key = "#osmId + '_' + #osmType")
     public Place findOrCreatePlace(Long osmId, String osmType) {
         return mapRepository.findByOsmIdAndOsmType(osmId, osmType)
                 .orElseGet(() -> {

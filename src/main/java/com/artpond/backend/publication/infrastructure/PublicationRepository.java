@@ -4,8 +4,11 @@ import com.artpond.backend.publication.domain.PubType;
 import com.artpond.backend.publication.domain.Publication;
 import com.artpond.backend.tag.domain.Tag;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -42,4 +45,21 @@ public interface PublicationRepository extends JpaRepository<Publication, Long> 
 
     @Query("SELECT p FROM User u JOIN u.savedPublications p WHERE u.userId = :userId")
     Page<Publication> findSavedPublicationsByUser(@Param("userId") Long userId, Pageable pageable);
+
+    @Query("""
+        SELECT p FROM Publication p 
+        WHERE p.author.userId IN (
+            SELECT f.userId FROM User u JOIN u.following f WHERE u.userId = :userId
+        )
+        AND (:showExplicit = true OR p.contentWarning = false)
+        ORDER BY p.creationDate DESC
+    """)
+    Page<Publication> findFeedByUserId(
+        @Param("userId") Long userId, 
+        @Param("showExplicit") boolean showExplicit, 
+        Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = {"images", "tags", "author", "place"})
+    Optional<Publication> findWithDetailsById(Long id);
 }

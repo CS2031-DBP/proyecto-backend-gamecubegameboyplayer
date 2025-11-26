@@ -12,6 +12,7 @@ import com.artpond.backend.notification.domain.NotificationType;
 import com.artpond.backend.publication.domain.Publication;
 import com.artpond.backend.publication.dto.PublicationResponseDto;
 import com.artpond.backend.publication.infrastructure.PublicationRepository;
+import com.artpond.backend.user.dto.PublicUserDto;
 import com.artpond.backend.user.dto.RegisterUserDto;
 import com.artpond.backend.user.dto.UserResponseDto;
 import com.artpond.backend.user.dto.UpdateUserDto; 
@@ -173,13 +174,27 @@ public class UserService implements UserDetailsService {
             throw new ForbiddenException("Los administradores no pueden cambiar su rol manualmente.");
         }
 
-        boolean hasPublications = !user.getPublications().isEmpty(); 
+        boolean hasPublications = userRepository.userHasPublications(userId); 
         if (!hasPublications) {
             throw new BadRequestException("Debes tener al menos una publicación para cambiar tu rol a ARTISTA.");
         }
 
         user.setRole(user.getRole() == Role.USER ? Role.ARTIST : Role.USER);
         return modelMapper.map(userRepository.save(user), UserResponseDto.class);
+    }
+
+    public Page<PublicUserDto> getUserFollowing(Long userId, Pageable pageable) {
+        if (!userRepository.existsById(userId)) throw new UserNotFoundException();
+        
+        return userRepository.findFollowing(userId, pageable)
+                .map(user -> modelMapper.map(user, PublicUserDto.class));
+    }
+
+    public Page<PublicUserDto> getUserFollowers(Long userId, Pageable pageable) {
+        if (!userRepository.existsById(userId)) throw new UserNotFoundException();
+        
+        return userRepository.findFollowers(userId, pageable)
+                .map(user -> modelMapper.map(user, PublicUserDto.class));
     }
 
     public User getUserById (Long id) {

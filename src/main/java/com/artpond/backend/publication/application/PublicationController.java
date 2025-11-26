@@ -20,8 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.util.List;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/publication")
@@ -94,5 +92,14 @@ public class PublicationController {
 
         publicationService.toggleHeart(id, userDetails.getUserId());
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/following")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<PublicationResponseDto>> getFeed(
+            Pageable pageable, 
+            @AuthenticationPrincipal User userDetails) {
+        
+        return ResponseEntity.ok(publicationService.getFeed(pageable, userDetails));
     }
 }

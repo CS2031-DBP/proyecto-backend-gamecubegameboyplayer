@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -32,7 +33,7 @@ public class AuthenticationService {
     private final ApplicationEventPublisher publisher;
     private final RefreshTokenService refreshTokenService;
 
-    public LoginResponseDto jwtRegister(final RegisterUserDto dto) throws BadRequestException {
+    public LoginResponseDto jwtRegister(final RegisterUserDto dto) throws BadCredentialsException {
         final UserResponseDto createdUser = userService.registerUser(dto, passwordEncoder);
 
         final UserDetails user = userService.loadUserByUsername(createdUser.getUsername());
@@ -45,7 +46,7 @@ public class AuthenticationService {
         return response;
     }
 
-    public LoginResponseDto jwtLogin(final JwtAuthLoginDto dto) throws BadRequestException {
+    public LoginResponseDto jwtLogin(final JwtAuthLoginDto dto) throws BadCredentialsException {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword())
         );
@@ -58,7 +59,7 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public LoginResponseDto refreshToken(String requestRefreshToken) throws BadRequestException {
+    public LoginResponseDto refreshToken(String requestRefreshToken) throws BadCredentialsException {
         RefreshToken token = refreshTokenService.findByToken(requestRefreshToken);
         token = refreshTokenService.verifyExpiration(token);
 
@@ -70,7 +71,7 @@ public class AuthenticationService {
         return response;
     }
 
-    public void logout(String refreshToken) throws BadRequestException {
+    public void logout(String refreshToken) throws BadCredentialsException {
         refreshTokenService.deleteByToken(refreshToken);
     }
 }

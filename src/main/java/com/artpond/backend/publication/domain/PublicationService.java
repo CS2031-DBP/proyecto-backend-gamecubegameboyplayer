@@ -207,7 +207,7 @@ public class PublicationService {
                     new PublicationCreatedEvent(this, savedPublication.getId(), dto.getOsmId(), dto.getOsmType()));
         }
         if (dto.getMachineGenerated() != true && dto.getPubType() != PubType.TEXT) {
-            eventPublisher.publishEvent(new AiAnalysisRequestedEvent(this, savedPublication.getId(), dto.getPubType()));
+            eventPublisher.publishEvent(new AiAnalysisRequestedEvent(this, savedPublication.getId(), savedPublication.getAuthor().getUserId(), dto.getPubType()));
         }
     }
 
@@ -365,11 +365,24 @@ public class PublicationService {
     public void retryFailedAiTask(Long taskId) {
         FailedAiTask task = failedAiRepository.findById(taskId)
                 .orElseThrow(() -> new NotFoundException("AI Task not found"));
-        eventPublisher.publishEvent(new AiAnalysisRequestedEvent(this, task.getPublicationId(), task.getPubType()));
+        eventPublisher.publishEvent(new AiAnalysisRequestedEvent(this, task.getPublicationId(), task.getUserId(), task.getPubType()));
         failedAiRepository.delete(task);
     }
 
     public void deleteFailedAiTask(Long taskId) {
         failedAiRepository.deleteById(taskId);
+    }
+
+    // following system
+    public Page<PublicationResponseDto> getFeed(Pageable pageable, User currentUser) {
+        boolean showExplicit = currentUser.getShowExplicit();
+        
+        Page<Publication> page = publicationRepository.findFeedByUserId(
+            currentUser.getUserId(), 
+            showExplicit, 
+            pageable
+        );
+        
+        return page.map(pub -> toDto(pub, currentUser));
     }
 }

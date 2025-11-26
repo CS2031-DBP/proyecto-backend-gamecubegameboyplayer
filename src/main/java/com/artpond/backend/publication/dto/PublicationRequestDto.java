@@ -1,5 +1,6 @@
 package com.artpond.backend.publication.dto;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -27,4 +28,10 @@ public class PublicationRequestDto {
     private String osmType; // "node" o "way" o "relation" segun el identificador
 
     private Boolean hideCleanImage = false; // prefer ocultar la marca de agua segun lo que defina el usuario
+
+    @AssertTrue(message = "osmId y osmType deben proporcionarse juntos")
+    private boolean isLocationValid() {
+        return (osmId == null && osmType == null) || 
+            (osmId != null && osmType != null);
+    }
 }

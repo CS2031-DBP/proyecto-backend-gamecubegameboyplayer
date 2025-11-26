@@ -135,7 +135,8 @@ public class PublicationEventHandler {
             String imageKey = publication.getImages().get(0).getCleanFileKey();
 
             boolean isAi = aiDetectionService.analyzeImage(
-                event.getPublicationId(), 
+                event.getPublicationId(),
+                event.getUserId(),
                 imageKey, 
                 event.getPubType()
             );

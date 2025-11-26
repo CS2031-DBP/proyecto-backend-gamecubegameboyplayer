@@ -96,4 +96,18 @@ public class UserController {
             Pageable pageable) {
         return ResponseEntity.ok(userService.getSavedPublications(userDetails.getUserId(), pageable));
     }
+
+    @GetMapping("/{id}/following")
+    public ResponseEntity<Page<PublicUserDto>> getFollowing(
+            @PathVariable Long id, 
+            Pageable pageable) {
+        return ResponseEntity.ok(userService.getUserFollowing(id, pageable));
+    }
+
+    @GetMapping("/{id}/followers")
+    public ResponseEntity<Page<PublicUserDto>> getFollowers(
+            @PathVariable Long id, 
+            Pageable pageable) {
+        return ResponseEntity.ok(userService.getUserFollowers(id, pageable));
+    }
 }
