@@ -26,6 +26,7 @@ import com.artpond.backend.user.exception.UserNotFoundException;
 import com.artpond.backend.user.infrastructure.UserRepository;
 import com.artpond.backend.publication.infrastructure.FailedAiRepository;
 import com.artpond.backend.publication.infrastructure.FailedPlaceRepository;
+import com.artpond.backend.publication.infrastructure.HeartCountProjection;
 
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -37,7 +38,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -58,7 +63,43 @@ public class PublicationService {
         return publicationRepository.findById(id).orElseThrow(PublicationNotFoundException::new);
     }
 
-    private PublicationResponseDto toDto(Publication pub, User viewer) {
+    // Método privado genérico para enriquecer páginas de publicaciones de manera eficiente (N+1 solution)
+    private Page<PublicationResponseDto> enrichPage(Page<Publication> page, User currentUser) {
+        if (page.isEmpty()) {
+            return page.map(p -> toDto(p, currentUser, null, null, null));
+        }
+
+        List<Long> pubIds = page.getContent().stream().map(Publication::getId).toList();
+
+        // Datos batch por defecto vacíos
+        Set<Long> likedIds = Collections.emptySet();
+        Set<Long> savedIds = Collections.emptySet();
+
+        // Solo consultamos si hay usuario logueado
+        if (currentUser != null) {
+            likedIds = publicationRepository.findLikedPublicationIdsByUser(currentUser.getUserId(), pubIds);
+            savedIds = publicationRepository.findSavedPublicationIdsByUser(currentUser.getUserId(), pubIds);
+        }
+
+        // Contar likes para todos los posts de la página en una sola query
+        Map<Long, Long> likeCounts = publicationRepository.countHeartsByPublicationIds(pubIds).stream()
+                .collect(Collectors.toMap(HeartCountProjection::getPublicationId, HeartCountProjection::getCount));
+
+        // Variables finales para usar en lambda
+        Set<Long> finalLikedIds = likedIds;
+        Set<Long> finalSavedIds = savedIds;
+
+        return page.map(pub -> {
+            boolean isLiked = finalLikedIds.contains(pub.getId());
+            boolean isSaved = finalSavedIds.contains(pub.getId());
+            int count = likeCounts.getOrDefault(pub.getId(), 0L).intValue();
+            
+            return toDto(pub, currentUser, isLiked, isSaved, count);
+        });
+    }
+
+    // Sobrecarga de toDto para aceptar datos precalculados
+    private PublicationResponseDto toDto(Publication pub, User viewer, Boolean precalcLiked, Boolean precalcSaved, Integer precalcHeartsCount) {
         PublicationResponseDto dto = new PublicationResponseDto();
         dto.setId(pub.getId());
         dto.setDescription(pub.getDescription());
@@ -67,9 +108,32 @@ public class PublicationService {
         dto.setCreationDate(pub.getCreationDate());
         dto.setAuthor(modelMapper.map(pub.getAuthor(), PublicUserDto.class));
 
-        dto.setCommentsCount(pub.getComments() != null ? pub.getComments().size() : 0);
-        dto.setHeartsCount(pub.getHearts() != null ? pub.getHearts().size() : 0);
+        dto.setCommentsCount(pub.getCommentsCount()); // Este es safe si es un count simple o size()
 
+        // --- Lógica de Likes y Guardados ---
+        if (precalcHeartsCount != null) {
+            // Usamos los datos optimizados si vienen
+            dto.setHeartsCount(precalcHeartsCount);
+            dto.setLikedByMe(precalcLiked != null ? precalcLiked : false);
+            dto.setSavedByMe(precalcSaved != null ? precalcSaved : false);
+        } else {
+            // Fallback a Lazy Loading (Solo para getById individual)
+            dto.setHeartsCount(pub.getHeartsCount()); 
+            if (viewer != null) {
+                boolean isLiked = pub.getHearts().stream()
+                        .anyMatch(u -> u.getUserId().equals(viewer.getUserId()));
+                dto.setLikedByMe(isLiked);
+                
+                boolean isSaved = viewer.getSavedPublications().stream()
+                        .anyMatch(p -> p.getId().equals(pub.getId()));
+                dto.setSavedByMe(isSaved);
+            } else {
+                dto.setLikedByMe(false);
+                dto.setSavedByMe(false);
+            }
+        }
+
+        // --- Mapeo de Imágenes ---
         dto.setImages(pub.getImages().stream().map(img -> {
             ImageResponseDto imgDto = new ImageResponseDto();
             imgDto.setId(img.getId());
@@ -87,25 +151,30 @@ public class PublicationService {
             return imgDto;
         }).collect(toList()));
 
-        dto.setTags(
-                pub.getTags().stream()
+        // --- Mapeo de Tags y Lugar ---
+        dto.setTags(pub.getTags().stream()
                         .map(tg -> modelMapper.map(tg, TagsResponseDto.class))
                         .collect(toList()));
 
         dto.setPlace(pub.getPlace() != null ? modelMapper.map(pub.getPlace(), PlaceDataDto.class) : null);
 
-        if (pub.getModerated() == true) {
+        // --- Moderación ---
+        if (Boolean.TRUE.equals(pub.getModerated())) {
             dto.setDescription("[MODERATED CONTENT]");
             dto.setImages(null);
             dto.setTags(null);
             dto.setPlace(null);
             dto.setCommentsCount(0);
             dto.setHeartsCount(0);
-
             dto.setModerated(true);
         }
 
         return dto;
+    }
+
+    // Versión simple para compatibilidad interna o casos sin optimización
+    private PublicationResponseDto toDto(Publication pub, User viewer) {
+        return toDto(pub, viewer, null, null, null);
     }
 
     @Transactional
@@ -127,7 +196,7 @@ public class PublicationService {
             publication.setManuallyVerified(true);
         } else {
             publication.setMachineGenerated(false);
-            publication.setMachineGenerated(false);
+            publication.setManuallyVerified(false);
         }
 
         if (dto.getPubType() != PubType.TEXT && dto.getTags() != null) {
@@ -228,7 +297,7 @@ public class PublicationService {
                     : publicationRepository.findByContentWarningFalse(pageable);
         }
 
-        return page.map(pub -> toDto(pub, currentUser));
+        return enrichPage(page, currentUser);
     }
 
     public Page<PublicationResponseDto> getUserPublications(Pageable pageable, User currentUser, Long id, PubType pubType) {
@@ -245,7 +314,7 @@ public class PublicationService {
                     : publicationRepository.findByAuthorAndContentWarningFalse(author, pageable);
         }
 
-        return page.map(pub -> toDto(pub, currentUser));
+        return enrichPage(page, currentUser);
     }
 
     public Page<PublicationResponseDto> getPublicationsByTag(String tagName, Pageable pageable, User currentUser) {
@@ -253,7 +322,7 @@ public class PublicationService {
         boolean canSeeExplicit = canSeeExplicitContent(currentUser);
         Page<Publication> page = canSeeExplicit ? publicationRepository.findByTagsContaining(tag, pageable)
                 : publicationRepository.findByTagsContainingAndContentWarningFalse(tag, pageable);
-        return page.map(pub -> toDto(pub, currentUser));
+        return enrichPage(page, currentUser);
     }
 
     private boolean canSeeExplicitContent(User user) {
@@ -269,7 +338,7 @@ public class PublicationService {
             if (!Boolean.TRUE.equals(currentUser.getShowExplicit()))
                 throw new ForbiddenException("Contenido explícito desactivado en tu perfil.");
         }
-
+        
         return toDto(publication, currentUser);
     }
 
@@ -298,7 +367,7 @@ public class PublicationService {
             pub.setTags(newTags);
         }
 
-        return toDto(publicationRepository.save(pub), pub.getAuthor()); // Retornamos como si fueramos el autor
+        return toDto(publicationRepository.save(pub), pub.getAuthor());
     }
 
     @Transactional
@@ -380,14 +449,11 @@ public class PublicationService {
 
     // following system
     public Page<PublicationResponseDto> getFeed(Pageable pageable, User currentUser) {
-        boolean showExplicit = currentUser.getShowExplicit();
-        
         Page<Publication> page = publicationRepository.findFeedByUserId(
             currentUser.getUserId(), 
-            showExplicit, 
+            currentUser.getShowExplicit(), 
             pageable
         );
-        
-        return page.map(pub -> toDto(pub, currentUser));
+        return enrichPage(page, currentUser);
     }
 }

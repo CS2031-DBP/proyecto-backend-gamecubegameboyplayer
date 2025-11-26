@@ -15,6 +15,8 @@ public class PublicationResponseDto {
     private String description;
     private PublicUserDto author;
 
+    private Boolean likedByMe;
+    private Boolean savedByMe;
     private int commentsCount;
     private int heartsCount;
 
