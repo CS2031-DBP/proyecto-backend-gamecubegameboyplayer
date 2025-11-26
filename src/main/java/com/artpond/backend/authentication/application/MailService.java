@@ -58,4 +58,14 @@ public class MailService {
 
         sendHTMLMail(send, "Artpond: Aviso de cambio de correo electronico", "emailchange", context);
     }
+
+    @Async
+    public void sendPasswordResetMail(String to, String username, String token) throws MessagingException {
+        Context context = new Context();
+        context.setVariable("username", username);
+        // Asumiendo que tu frontend tiene una ruta /reset-password?token=...
+        context.setVariable("resetUrl", frontendUrl + "/reset-password?token=" + token);
+
+        sendHTMLMail(to, "Artpond: Recuperación de contraseña", "reset-password", context);
+    }
 }

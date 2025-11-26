@@ -1,9 +1,11 @@
 package com.artpond.backend.notification.application;
 
-import com.artpond.backend.notification.domain.Notification;
 import com.artpond.backend.notification.domain.NotificationService;
+import com.artpond.backend.notification.dto.NotificationDto;
 import com.artpond.backend.user.domain.User;
 import lombok.RequiredArgsConstructor;
+
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -17,10 +19,16 @@ import org.springframework.web.bind.annotation.*;
 @PreAuthorize("isAuthenticated()")
 public class NotificationController {
     private final NotificationService notificationService;
+    private final ModelMapper modelMapper;
 
     @GetMapping
-    public ResponseEntity<Page<Notification>> getMyNotifications(@AuthenticationPrincipal User user, Pageable pageable) {
-        return ResponseEntity.ok(notificationService.getUserNotifications(user.getUserId(), pageable));
+    public ResponseEntity<Page<NotificationDto>> getMyNotifications(@AuthenticationPrincipal User user, Pageable pageable) {
+        var notificationsPage = notificationService.getUserNotifications(user.getUserId(), pageable);
+
+        Page<NotificationDto> dtoPage = notificationsPage
+                .map(notification -> modelMapper.map(notification, NotificationDto.class));
+
+        return ResponseEntity.ok(dtoPage);
     }
 
     @GetMapping("/unread-count")

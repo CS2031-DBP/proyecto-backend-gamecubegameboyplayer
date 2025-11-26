@@ -97,7 +97,7 @@ public class UserService implements UserDetailsService {
                     follower,
                     NotificationType.NEW_FOLLOWER,
                     follower.getUserId(),
-                    follower.getDisplayName() + " ha comenzado a seguirte."
+                    (follower.getDisplayName() != null ? follower.getDisplayName() : follower.getUsername()) + " ha comenzado a seguirte."
                 );
             }
         }
@@ -149,6 +149,7 @@ public class UserService implements UserDetailsService {
         user.setDisplayName(dto.getDisplayName());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setRole(Role.USER);
+        user.setProvider(AuthProvider.LOCAL);
 
         return modelMapper.map(userRepository.saveAndFlush(user), UserResponseDto.class);
     }

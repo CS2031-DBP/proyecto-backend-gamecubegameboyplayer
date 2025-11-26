@@ -41,6 +41,7 @@ public class User implements UserDetails {
     private String email;
 
     @Column(nullable = false)
+    @JsonIgnore
     private String password;
 
     @Column(nullable = true)
@@ -77,6 +78,9 @@ public class User implements UserDetails {
     @ManyToMany(mappedBy = "following")
     @JsonIgnore
     private Set<User> followers = new HashSet<>();
+
+    @Enumerated(EnumType.STRING)
+    private AuthProvider provider;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -14,7 +14,6 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
 
     public void createNotification(User recipient, User actor, NotificationType type, Long refId, String message) {
-        // No notificar si el usuario interactúa consigo mismo
         if (actor != null && recipient.getUserId().equals(actor.getUserId())) {
             return;
         }

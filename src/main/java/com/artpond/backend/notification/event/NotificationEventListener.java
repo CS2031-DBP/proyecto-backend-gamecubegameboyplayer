@@ -30,7 +30,7 @@ public class NotificationEventListener {
                 author,
                 NotificationType.COMMENT_ON_POST,
                 publication.getId(),
-                author.getDisplayName() + " comentó en tu publicación."
+                (author.getDisplayName() != null ? author.getDisplayName() : author.getUsername()) + " comentó en tu publicación."
             );
         } else {
             notificationService.createNotification(
@@ -38,7 +38,7 @@ public class NotificationEventListener {
                 author,
                 NotificationType.REPLY_TO_COMMENT,
                 publication.getId(),
-                author.getDisplayName() + " respondió a tu comentario."
+                (author.getDisplayName() != null ? author.getDisplayName() : author.getUsername()) + " respondió a tu comentario."
             );
         }
     }
@@ -54,7 +54,7 @@ public class NotificationEventListener {
             actor,
             NotificationType.HEART_ON_POST,
             pub.getId(),
-            actor.getDisplayName() + " le gustó tu publicación."
+            (actor.getDisplayName() != null ? actor.getDisplayName() : actor.getUsername()) + " le gustó tu publicación."
         );
     }
 

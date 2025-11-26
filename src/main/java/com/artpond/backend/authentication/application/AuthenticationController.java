@@ -3,8 +3,10 @@ package com.artpond.backend.authentication.application;
 import com.artpond.backend.authentication.domain.AuthenticationService;
 import com.artpond.backend.authentication.domain.RefreshToken;
 import com.artpond.backend.authentication.domain.RefreshTokenService;
+import com.artpond.backend.authentication.dto.ForgotPasswordRequestDto;
 import com.artpond.backend.authentication.dto.JwtAuthLoginDto;
 import com.artpond.backend.authentication.dto.LoginResponseDto;
+import com.artpond.backend.authentication.dto.ResetPasswordRequestDto;
 import com.artpond.backend.user.dto.RegisterUserDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -87,5 +89,18 @@ public class AuthenticationController {
                 .maxAge(maxAgeSeconds)
                 .sameSite("Strict")
                 .build();
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@RequestBody @Valid ForgotPasswordRequestDto dto) {
+        authenticationService.forgotPassword(dto.getEmail());
+        // Siempre devolvemos OK para evitar enumeración de usuarios
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@RequestBody @Valid ResetPasswordRequestDto dto) {
+        authenticationService.resetPassword(dto.getToken(), dto.getNewPassword());
+        return ResponseEntity.ok().build();
     }
 }

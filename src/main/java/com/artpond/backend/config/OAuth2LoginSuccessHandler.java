@@ -3,6 +3,7 @@ package com.artpond.backend.config;
 import com.artpond.backend.jwt.domain.JwtService;
 import com.artpond.backend.authentication.domain.RefreshToken;
 import com.artpond.backend.authentication.domain.RefreshTokenService;
+import com.artpond.backend.user.domain.AuthProvider;
 import com.artpond.backend.user.domain.Role;
 import com.artpond.backend.user.domain.User;
 import com.artpond.backend.user.infrastructure.UserRepository;
@@ -70,6 +71,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         user.setDisplayName(name);
         user.setUsername(email.split("@")[0] + UUID.randomUUID().toString().substring(0, 5)); 
         user.setRole(Role.USER);
+        user.setProvider(AuthProvider.GOOGLE);
         user.setShowExplicit(false);
         user.setDescription("");
 
