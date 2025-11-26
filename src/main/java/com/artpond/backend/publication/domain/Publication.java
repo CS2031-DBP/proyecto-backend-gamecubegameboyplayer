@@ -74,6 +74,9 @@ public class Publication {
     )
     private List<User> hearts = new ArrayList<>();
 
+    public int getHeartsCount() {
+        return this.hearts != null ? this.hearts.size() : 0;
+    }
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "place_id", nullable = true)
