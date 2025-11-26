@@ -9,6 +9,7 @@ import com.artpond.backend.image.domain.Image;
 import com.artpond.backend.map.domain.Place;
 import com.artpond.backend.tag.domain.Tag;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -72,6 +73,7 @@ public class Publication {
         joinColumns = @JoinColumn(name = "publication_id"),
         inverseJoinColumns = @JoinColumn(name = "user_id")
     )
+    @JsonIgnore
     private List<User> hearts = new ArrayList<>();
 
     public int getHeartsCount() {

@@ -62,6 +62,7 @@ public class User implements UserDetails {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "publication_id")
     )
+    @JsonIgnore
     private List<Publication> savedPublications = new ArrayList<>();
 
     @ManyToMany
