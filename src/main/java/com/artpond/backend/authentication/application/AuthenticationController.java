@@ -5,7 +5,6 @@ import com.artpond.backend.authentication.domain.RefreshToken;
 import com.artpond.backend.authentication.domain.RefreshTokenService;
 import com.artpond.backend.authentication.dto.JwtAuthLoginDto;
 import com.artpond.backend.authentication.dto.LoginResponseDto;
-import com.artpond.backend.user.domain.User;
 import com.artpond.backend.user.dto.RegisterUserDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;

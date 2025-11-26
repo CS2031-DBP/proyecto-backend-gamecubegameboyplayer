@@ -3,6 +3,7 @@ package com.artpond.backend.authentication.domain;
 import com.artpond.backend.authentication.dto.JwtAuthLoginDto;
 import com.artpond.backend.authentication.dto.LoginResponseDto;
 import com.artpond.backend.authentication.event.UserRegisteredEvent;
+import com.artpond.backend.definitions.exception.BadRequestException;
 import com.artpond.backend.jwt.domain.JwtService;
 import com.artpond.backend.user.domain.User;
 import com.artpond.backend.user.domain.UserService;
@@ -31,7 +32,7 @@ public class AuthenticationService {
     private final ApplicationEventPublisher publisher;
     private final RefreshTokenService refreshTokenService;
 
-    public LoginResponseDto jwtRegister(final RegisterUserDto dto) {
+    public LoginResponseDto jwtRegister(final RegisterUserDto dto) throws BadRequestException {
         final UserResponseDto createdUser = userService.registerUser(dto, passwordEncoder);
 
         final UserDetails user = userService.loadUserByUsername(createdUser.getUsername());
@@ -44,7 +45,7 @@ public class AuthenticationService {
         return response;
     }
 
-    public LoginResponseDto jwtLogin(final JwtAuthLoginDto dto) {
+    public LoginResponseDto jwtLogin(final JwtAuthLoginDto dto) throws BadRequestException {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(dto.getUsername(), dto.getPassword())
         );
@@ -57,7 +58,7 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public LoginResponseDto refreshToken(String requestRefreshToken) {
+    public LoginResponseDto refreshToken(String requestRefreshToken) throws BadRequestException {
         RefreshToken token = refreshTokenService.findByToken(requestRefreshToken);
         token = refreshTokenService.verifyExpiration(token);
 
@@ -69,7 +70,7 @@ public class AuthenticationService {
         return response;
     }
 
-    public void logout(String refreshToken) {
+    public void logout(String refreshToken) throws BadRequestException {
         refreshTokenService.deleteByToken(refreshToken);
     }
 }

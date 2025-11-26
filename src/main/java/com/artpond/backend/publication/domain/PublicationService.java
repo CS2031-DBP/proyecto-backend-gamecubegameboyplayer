@@ -91,6 +91,15 @@ public class PublicationService {
 
         dto.setPlace(pub.getPlace() != null ? modelMapper.map(pub.getPlace(), PlaceDataDto.class) : null);
 
+        if (pub.getModerated() == true) {
+            dto.setDescription("[MODERATED CONTENT]");
+            dto.setImages(null);
+            dto.setTags(null);
+            dto.setPlace(null);
+
+            dto.setModerated(true);
+        }
+
         return dto;
     }
 

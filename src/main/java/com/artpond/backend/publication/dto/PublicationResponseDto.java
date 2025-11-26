@@ -18,6 +18,7 @@ public class PublicationResponseDto {
     private Boolean contentWarning;
     private Boolean machineGenerated;
     private Boolean manuallyVerified;
+    private Boolean moderated = false;
     private LocalDateTime creationDate;
     
     private List<ImageResponseDto> images;

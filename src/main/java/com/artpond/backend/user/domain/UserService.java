@@ -183,15 +183,15 @@ public class UserService implements UserDetailsService {
     }
 
     public User getUserById (Long id) {
-        return userRepository.findById(id).orElseThrow(() -> new NotFoundException("Usuario no encontrado."));
+        return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException());
     }
 
     public User findByEmail (String email) {
-        return userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("No existe usuario con este email."));
+        return userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException());
     }
 
     public User getUserByUsername(String userName) {
-        return userRepository.findByUsername(userName).orElseThrow(() -> new NotFoundException("No existe usuario con este nombre."));
+        return userRepository.findByUsername(userName).orElseThrow(() -> new UserNotFoundException());
     }
 
     public User getCurrentUser() {
