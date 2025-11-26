@@ -21,51 +21,51 @@ import com.artpond.backend.user.domain.User;
 
 @Repository
 public interface PublicationRepository extends JpaRepository<Publication, Long> {
-    
-    @EntityGraph(attributePaths = {"author", "place", "images", "tags"})
+
+    @EntityGraph(attributePaths = {"author", "place"})
     Page<Publication> findByTagsContaining(Tag tag, Pageable pageable);
     
-    @EntityGraph(attributePaths = {"author", "place", "images", "tags"})
+    @EntityGraph(attributePaths = {"author", "place"})
     Page<Publication> findByTagsContainingAndContentWarningFalse(Tag tag, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"author", "place", "images", "tags"})
+    @EntityGraph(attributePaths = {"author", "place"})
     Page<Publication> findByPlace_IdOrderByCreationDate(Long placeId, Pageable pageable);
     
-    @EntityGraph(attributePaths = {"author", "place", "images", "tags"})
+    @EntityGraph(attributePaths = {"author", "place"})
     Page<Publication> findByPlace_IdAndContentWarningFalseOrderByCreationDate(Long placeId, Pageable pageable);
 
     Long countByPlace_IdAndModeratedIsFalse(Long placeId);
 
-    @EntityGraph(attributePaths = {"author", "place", "images", "tags"})
+    @EntityGraph(attributePaths = {"author", "place"})
     Page<Publication> findByContentWarningFalse(Pageable pageable);
     
-    @EntityGraph(attributePaths = {"author", "place", "images", "tags"})
+    @EntityGraph(attributePaths = {"author", "place"})
     @Override
     Page<Publication> findAll(Pageable pageable);
 
-    @EntityGraph(attributePaths = {"author", "place", "images", "tags"})
+    @EntityGraph(attributePaths = {"author", "place"})
     Page<Publication> findByPubType(PubType pubType, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"author", "place", "images", "tags"})
+    @EntityGraph(attributePaths = {"author", "place"})
     Page<Publication> findByPubTypeAndContentWarningFalse(PubType pubType, Pageable pageable);
 
-    // Métodos para el perfil de usuario
-    @EntityGraph(attributePaths = {"author", "place", "images", "tags"})
+    @EntityGraph(attributePaths = {"author", "place"})
     Page<Publication> findByAuthor(User author, Pageable pageable);
     
-    @EntityGraph(attributePaths = {"author", "place", "images", "tags"})
+    @EntityGraph(attributePaths = {"author", "place"})
     Page<Publication> findByAuthorAndPubType(User author, PubType pubType, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"author", "place", "images", "tags"})
+    @EntityGraph(attributePaths = {"author", "place"})
     Page<Publication> findByAuthorAndContentWarningFalse(User author, Pageable pageable);
     
-    @EntityGraph(attributePaths = {"author", "place", "images", "tags"})
+    @EntityGraph(attributePaths = {"author", "place"})
     Page<Publication> findByAuthorAndPubTypeAndContentWarningFalse(User author, PubType pubType, Pageable pageable);
 
     @Query("SELECT p FROM User u JOIN u.savedPublications p WHERE u.userId = :userId")
-    @EntityGraph(attributePaths = {"author", "place", "images", "tags"})
+    @EntityGraph(attributePaths = {"author", "place"})
     Page<Publication> findSavedPublicationsByUser(@Param("userId") Long userId, Pageable pageable);
 
+    // Feed principal
     @Query("""
         SELECT p FROM Publication p 
         WHERE p.author.userId IN (
@@ -74,7 +74,7 @@ public interface PublicationRepository extends JpaRepository<Publication, Long> 
         AND (:showExplicit = true OR p.contentWarning = false)
         ORDER BY p.creationDate DESC
     """)
-    @EntityGraph(attributePaths = {"author", "place", "images", "tags"})
+    @EntityGraph(attributePaths = {"author", "place"})
     Page<Publication> findFeedByUserId(
         @Param("userId") Long userId, 
         @Param("showExplicit") boolean showExplicit, 
@@ -92,13 +92,4 @@ public interface PublicationRepository extends JpaRepository<Publication, Long> 
 
     @Query("SELECT p.id as publicationId, COUNT(h) as count FROM Publication p JOIN p.hearts h WHERE p.id IN :pubIds GROUP BY p.id")
     List<HeartCountProjection> countHeartsByPublicationIds(@Param("pubIds") List<Long> pubIds);
-
-    @Query("SELECT COUNT(p) > 0 FROM Publication p JOIN p.hearts h WHERE p.id = :pubId AND h.userId = :userId")
-    boolean existsHeart(@Param("pubId") Long pubId, @Param("userId") Long userId);
-
-    @Query("SELECT COUNT(u) > 0 FROM User u JOIN u.savedPublications p WHERE u.userId = :userId AND p.id = :pubId")
-    boolean existsSaved(@Param("pubId") Long pubId, @Param("userId") Long userId);
-
-    @Query("SELECT COUNT(h) FROM Publication p JOIN p.hearts h WHERE p.id = :pubId")
-    int countHearts(@Param("pubId") Long pubId);
 }
