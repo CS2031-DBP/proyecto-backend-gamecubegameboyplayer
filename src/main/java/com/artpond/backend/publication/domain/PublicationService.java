@@ -99,7 +99,6 @@ public class PublicationService {
             String username) {
         User user = userRepository.findByUsername(username).orElseThrow(UserNotFoundException::new);
 
-        // Validaciones iniciales
         validatePublicationRequest(dto, imageFiles, user);
 
         Publication publication = new Publication();
@@ -109,18 +108,17 @@ public class PublicationService {
         publication.setHideCleanImage(dto.getHideCleanImage() != null ? dto.getHideCleanImage() : false);
         publication.setPubType(dto.getPubType());
 
-        // Lógica de Machine Generated
-        if (Boolean.TRUE.equals(dto.getMachineGenerated())) {
+        if (dto.getMachineGenerated()) {
             publication.setMachineGenerated(true);
             publication.setManuallyVerified(true);
         } else {
             publication.setMachineGenerated(false);
+            publication.setMachineGenerated(false);
         }
 
-        // Procesar Tags (Filtrando vacíos)
         if (dto.getPubType() != PubType.TEXT && dto.getTags() != null) {
             List<Tag> tagEntities = dto.getTags().stream()
-                    .filter(t -> t != null && !t.trim().isEmpty()) // Fix: Filtrar tags vacíos
+                    .filter(t -> t != null && !t.trim().isEmpty())
                     .map(tagName -> tagRepository.findByName(tagName)
                             .orElseGet(() -> {
                                 Tag newTag = new Tag();
@@ -131,10 +129,8 @@ public class PublicationService {
             publication.setTags(tagEntities);
         }
 
-        // 1. Guardar entidad básica para obtener ID
         Publication savedPublication = publicationRepository.save(publication);
 
-        // 2. Subir imágenes (con lógica de compensación/rollback S3)
         if (dto.getPubType() != PubType.TEXT && imageFiles != null) {
             List<String> uploadedCleanKeys = new ArrayList<>();
             List<String> uploadedPublicKeys = new ArrayList<>();
@@ -159,20 +155,14 @@ public class PublicationService {
 
                 savedPublication.setImages(imageEntities);
                 publicationRepository.save(savedPublication);
-
+                publishPostCreationEvents(dto, savedPublication);
             } catch (Exception e) {
-                // ROLLBACK S3: Si algo falla (DB o subida), borramos lo que se subió
                 if (!uploadedCleanKeys.isEmpty()) {
                     imageService.deleteMultipleImages(uploadedCleanKeys, uploadedPublicKeys);
                 }
-                // El rollback de DB ocurre automáticamente por @Transactional al lanzar la
-                // excepción
                 throw new PublicationCreationException("Error procesando imágenes: " + e.getMessage());
             }
         }
-
-        // 3. Eventos post-creación
-        publishPostCreationEvents(dto, savedPublication);
 
         return modelMapper.map(savedPublication, PublicationCreatedDto.class);
     }
@@ -207,7 +197,7 @@ public class PublicationService {
             eventPublisher.publishEvent(
                     new PublicationCreatedEvent(this, savedPublication.getId(), dto.getOsmId(), dto.getOsmType()));
         }
-        if (!Boolean.TRUE.equals(dto.getMachineGenerated()) && dto.getPubType() != PubType.TEXT) {
+        if (dto.getMachineGenerated() != true && dto.getPubType() != PubType.TEXT) {
             eventPublisher.publishEvent(new AiAnalysisRequestedEvent(this, savedPublication.getId(), dto.getPubType()));
         }
     }
@@ -220,8 +210,25 @@ public class PublicationService {
             page = canSeeExplicit ? publicationRepository.findByPubType(pubType, pageable)
                     : publicationRepository.findByPubTypeAndContentWarningFalse(pubType, pageable);
         } else {
-            page = canSeeExplicit ? publicationRepository.findByPubTypeNot(PubType.TEXT, pageable)
-                    : publicationRepository.findByPubTypeNotAndContentWarningFalse(PubType.TEXT, pageable);
+            page = canSeeExplicit ? publicationRepository.findAll(pageable)
+                    : publicationRepository.findByContentWarningFalse(pageable);
+        }
+
+        return page.map(pub -> toDto(pub, currentUser));
+    }
+
+    public Page<PublicationResponseDto> getUserPublications(Pageable pageable, User currentUser, Long id, PubType pubType) {
+        boolean canSeeExplicit = canSeeExplicitContent(currentUser);
+        Page<Publication> page;
+
+        User author = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException());
+
+        if (pubType != null) {
+            page = canSeeExplicit ? publicationRepository.findByAuthorAndPubType(author, pubType, pageable)
+                    : publicationRepository.findByAuthorAndPubTypeAndContentWarningFalse(author, pubType, pageable);
+        } else {
+            page = canSeeExplicit ? publicationRepository.findByAuthor(author, pageable)
+                    : publicationRepository.findByAuthorAndContentWarningFalse(author, pageable);
         }
 
         return page.map(pub -> toDto(pub, currentUser));

@@ -7,6 +7,7 @@ import com.artpond.backend.publication.domain.AiDetectionService;
 import com.artpond.backend.publication.domain.FailedAiTask;
 import com.artpond.backend.publication.domain.FailedPlaceTask;
 import com.artpond.backend.publication.domain.Publication;
+import com.artpond.backend.publication.exception.PublicationNotFoundException;
 import com.artpond.backend.publication.infrastructure.FailedAiRepository;
 import com.artpond.backend.publication.infrastructure.FailedPlaceRepository;
 import com.artpond.backend.publication.infrastructure.PublicationRepository;
@@ -63,7 +64,7 @@ public class PublicationEventHandler {
             nominatimRateLimiter.asBlocking().consume(1);
 
             Publication publication = publicationRepository.findById(event.getPublicationId())
-                .orElseThrow(() -> new RuntimeException("Publication not found: " + event.getPublicationId()));
+                .orElseThrow(() -> new PublicationNotFoundException());
             
             Place place = mapService.findOrCreatePlace(event.getOsmId(), event.getOsmType());
             
@@ -127,7 +128,7 @@ public class PublicationEventHandler {
 
         try {
             Publication publication = publicationRepository.findById(event.getPublicationId())
-                    .orElseThrow(() -> new RuntimeException("Publication not found"));
+                    .orElseThrow(() -> new PublicationNotFoundException());
 
             if (publication.getImages().isEmpty()) return;
             

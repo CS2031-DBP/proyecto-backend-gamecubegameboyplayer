@@ -1,5 +1,6 @@
 package com.artpond.backend.map.domain;
 
+import org.apache.http.client.HttpResponseException;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
@@ -175,17 +176,20 @@ public class MapService {
         } catch (HttpClientErrorException e) {
             throw new InvalidPlaceException("Place failed to validate: " + e.getMessage());
         } catch (Exception e) {
-            throw new RuntimeException("Nominatim network error: " + e.getMessage(), e);
+            throw new HttpClientErrorException(HttpStatus.BAD_GATEWAY, "Nominatim network error: " + e.getMessage());
         }
 
-        if (response.getBody() == null) {
+        List<JsonPlaceDataDto> res = response.getBody();
+
+        if (res == null) {
             throw new InvalidPlaceException("Response null for id: " + osmIdWithType);
-        } else if (response.getBody().isEmpty()) {
-            throw new InvalidPlaceException("Response empty for id: " + osmIdWithType);
+        } else {
+            if (res.isEmpty()) {
+                throw new InvalidPlaceException("Response empty for id: " + osmIdWithType);
+            }
+            JsonPlaceDataDto nominatimData = res.get(0);
+            return mapToPlaceDataDto(nominatimData);
         }
-
-        JsonPlaceDataDto nominatimData = response.getBody().get(0);
-        return mapToPlaceDataDto(nominatimData);
     }
 
     private HttpHeaders createNominatimHeaders() {

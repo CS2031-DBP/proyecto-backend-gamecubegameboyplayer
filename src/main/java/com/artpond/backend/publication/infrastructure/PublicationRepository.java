@@ -10,6 +10,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.util.List;
+import com.artpond.backend.user.domain.User;
+
 
 @Repository
 public interface PublicationRepository extends JpaRepository<Publication, Long> {
@@ -30,6 +33,12 @@ public interface PublicationRepository extends JpaRepository<Publication, Long> 
 
     Page<Publication> findByPubTypeNot(PubType pubType, Pageable pageable);
     Page<Publication> findByPubTypeNotAndContentWarningFalse(PubType pubType, Pageable pageable);
+
+    Page<Publication> findByAuthor(User author, Pageable pageable);
+    Page<Publication> findByAuthorAndPubType(User author, PubType pubType, Pageable pageable);
+
+    Page<Publication> findByAuthorAndContentWarningFalse(User author, Pageable pageable);
+    Page<Publication> findByAuthorAndPubTypeAndContentWarningFalse(User author, PubType pubType, Pageable pageable);
 
     @Query("SELECT p FROM User u JOIN u.savedPublications p WHERE u.userId = :userId")
     Page<Publication> findSavedPublicationsByUser(@Param("userId") Long userId, Pageable pageable);
