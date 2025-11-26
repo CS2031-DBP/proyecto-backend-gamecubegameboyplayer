@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 public class TagController {
     private final TagService tagService;
 
-    @DeleteMapping
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteTag(@PathVariable Long id) {
         tagService.deleteTagById(id);
         return ResponseEntity.noContent().build();

@@ -154,6 +154,7 @@ public class PublicationEventHandler {
             FailedAiTask failure = new FailedAiTask();
             failure.setPublicationId(event.getPublicationId());
             failure.setPubType(event.getPubType());
+            failure.setUserId(event.getUserId());
             failure.setErrorMessage(e.getMessage() != null ? e.getMessage() : "Unknown error");
             failure.setFailedAt(LocalDateTime.now());
             

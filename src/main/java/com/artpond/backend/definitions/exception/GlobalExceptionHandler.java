@@ -2,6 +2,8 @@ package com.artpond.backend.definitions.exception;
 
 import com.artpond.backend.definitions.dto.ApiErrorDto;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -16,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorDto> handleValidationExceptions(MethodArgumentNotValidException ex, HttpServletRequest request) {
@@ -56,8 +59,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorDto> handleGlobalException(Exception ex, HttpServletRequest request) {
-        ex.printStackTrace(); 
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", "Ocurrió un error inesperado. Inténtelo más tarde.", request, null);
+        log.error("Unexpected error on {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, 
+            "Internal Server Error", 
+            "Ocurrió un error inesperado.",
+            request, null);
     }
 
     private ResponseEntity<ApiErrorDto> buildResponse(HttpStatus status, String error, String message, HttpServletRequest request, Map<String, String> validationErrors) {

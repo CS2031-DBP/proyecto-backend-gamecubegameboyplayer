@@ -163,8 +163,8 @@ public class PublicationService {
                         .collect(toList());
 
                 savedPublication.setImages(imageEntities);
-                publicationRepository.save(savedPublication);
-                publishPostCreationEvents(dto, savedPublication);
+                Publication finalPublication = publicationRepository.save(savedPublication);
+                publishPostCreationEvents(dto, finalPublication);
             } catch (Exception e) {
                 if (!uploadedCleanKeys.isEmpty()) {
                     imageService.deleteMultipleImages(uploadedCleanKeys, uploadedPublicKeys);

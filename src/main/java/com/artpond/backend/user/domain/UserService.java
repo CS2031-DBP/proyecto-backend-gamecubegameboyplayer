@@ -29,6 +29,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -125,6 +126,13 @@ public class UserService implements UserDetailsService {
     }
 
     public UserResponseDto registerUser (RegisterUserDto dto, PasswordEncoder passwordEncoder) {
+        if (userRepository.findByUsername(dto.getUsername()).isPresent()) {
+            throw new BadCredentialsException("Invalid credentials");
+        }
+        if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
+            throw new BadCredentialsException("Invalid credentials");
+        }
+
         User user = new User();
         user.setEmail(dto.getEmail());
         user.setUsername(dto.getUsername());

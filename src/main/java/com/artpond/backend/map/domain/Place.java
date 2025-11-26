@@ -21,8 +21,8 @@ public class Place {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private Long osmId; // la id del lugar segun la API de OpenStreetMap
+    @Column(nullable = false, unique = false)
+    private Long osmId;
 
     @Column(nullable = false)
     private String osmType;

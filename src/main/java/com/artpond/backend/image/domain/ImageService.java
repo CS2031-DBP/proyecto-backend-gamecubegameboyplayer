@@ -1,10 +1,12 @@
 package com.artpond.backend.image.domain;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
 import com.artpond.backend.definitions.exception.BadRequestException;
 import com.artpond.backend.definitions.exception.ForbiddenException;
+import com.artpond.backend.definitions.exception.NotFoundException;
 import com.artpond.backend.image.dto.ImageUploadDto;
 import com.artpond.backend.user.domain.Role;
 
@@ -148,8 +150,15 @@ public class ImageService {
             throw new ForbiddenException("Unauthorized access");
         }
 
-        S3Object s3Object = s3Client.getObject(bucketName, fileName);
-        return s3Object.getObjectContent().readAllBytes();
+        try {
+            S3Object s3Object = s3Client.getObject(bucketName, fileName);
+            return s3Object.getObjectContent().readAllBytes();
+        } catch (AmazonS3Exception e) {
+            if (e.getStatusCode() == 404) {
+                throw new NotFoundException("Image not found");
+            }
+            throw e;
+        }
     }
 
     public String getPublicUrl(String fileName) {

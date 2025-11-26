@@ -16,6 +16,7 @@ import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.artpond.backend.definitions.exception.BadRequestException;
 
 import java.awt.image.BufferedImage;
 
@@ -34,6 +35,12 @@ public class WatermarkService {
     }
     
     public String uploadWatermark(MultipartFile file, String userId) throws IOException {
+        if (!"image/png".equals(file.getContentType())) {
+            throw new BadRequestException("La marca de agua debe ser PNG");
+        }
+        if (file.getSize() > 2 * 1024 * 1024) { // 2MB
+            throw new BadRequestException("La marca de agua no puede exceder 2MB");
+        }
         deleteUserWatermark(userId);
         
         String fileName = WATERMARK_PREFIX + userId + "/" + System.currentTimeMillis() + ".png";

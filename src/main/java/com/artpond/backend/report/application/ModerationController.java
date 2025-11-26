@@ -56,7 +56,7 @@ public class ModerationController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/tasks/place{taskId}")
+    @DeleteMapping("/tasks/place/{taskId}")
     public ResponseEntity<Void> dismissTask(@PathVariable Long taskId) {
         publicationService.deleteFailedTask(taskId);
         return ResponseEntity.noContent().build();
