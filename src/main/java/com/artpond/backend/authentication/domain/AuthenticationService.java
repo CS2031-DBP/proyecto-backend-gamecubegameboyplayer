@@ -69,7 +69,7 @@ public class AuthenticationService {
         return response;
     }
 
-    public void logout(Long userId) {
-        refreshTokenService.deleteByUserId(userId);
+    public void logout(String refreshToken) {
+        refreshTokenService.deleteByToken(refreshToken);
     }
 }
