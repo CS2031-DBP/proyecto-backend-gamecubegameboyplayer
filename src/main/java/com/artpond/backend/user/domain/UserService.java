@@ -9,6 +9,7 @@ import com.artpond.backend.image.domain.ImageService;
 import com.artpond.backend.image.domain.WatermarkService;
 import com.artpond.backend.notification.domain.NotificationService;
 import com.artpond.backend.notification.domain.NotificationType;
+import com.artpond.backend.notification.infrastructure.NotificationRepository;
 import com.artpond.backend.publication.domain.Publication;
 import com.artpond.backend.publication.dto.PublicationResponseDto;
 import com.artpond.backend.publication.infrastructure.PublicationRepository;
@@ -53,6 +54,7 @@ public class UserService implements UserDetailsService {
     private final ApplicationEventPublisher eventPublisher;
 
     private final NotificationService notificationService;
+    private final NotificationRepository notificationRepository;
     private final PublicationRepository publicationRepository;
 
     @Transactional
@@ -83,13 +85,21 @@ public class UserService implements UserDetailsService {
             follower.getFollowing().add(followed);
             followed.getFollowers().add(follower);
 
-            notificationService.createNotification(
-                followed,
-                follower,
-                NotificationType.NEW_FOLLOWER,
-                follower.getUserId(),
-                follower.getDisplayName() + " ha comenzado a seguirte."
+            Boolean alreadyNotified = notificationRepository.existsByRecipientAndActorAndType(
+                followed, 
+                follower, 
+                NotificationType.NEW_FOLLOWER
             );
+
+            if (!alreadyNotified) {
+                notificationService.createNotification(
+                    followed,
+                    follower,
+                    NotificationType.NEW_FOLLOWER,
+                    follower.getUserId(),
+                    follower.getDisplayName() + " ha comenzado a seguirte."
+                );
+            }
         }
         userRepository.save(follower);
         userRepository.save(followed);

@@ -81,4 +81,12 @@ public class User implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
+
+    public int getFollowersCount() {
+        return this.followers != null ? this.followers.size() : 0;
+    }
+
+    public int getFollowingCount() {
+        return this.following != null ? this.following.size() : 0;
+    }
 }
