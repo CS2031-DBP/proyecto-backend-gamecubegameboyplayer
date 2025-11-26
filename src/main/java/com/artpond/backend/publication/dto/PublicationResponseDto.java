@@ -14,6 +14,8 @@ public class PublicationResponseDto {
     private Long id;
     private String description;
     private PublicUserDto author;
+
+    private int commentsCount;
     private int heartsCount;
 
     private Boolean contentWarning;

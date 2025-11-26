@@ -78,6 +78,10 @@ public class Publication {
         return this.hearts != null ? this.hearts.size() : 0;
     }
 
+    public int getCommentsCount() {
+        return this.comments != null ? this.comments.size() : 0;
+    }
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "place_id", nullable = true)
     private Place place;
