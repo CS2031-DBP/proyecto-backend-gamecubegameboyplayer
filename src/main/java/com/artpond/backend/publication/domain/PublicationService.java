@@ -67,6 +67,9 @@ public class PublicationService {
         dto.setCreationDate(pub.getCreationDate());
         dto.setAuthor(modelMapper.map(pub.getAuthor(), PublicUserDto.class));
 
+        dto.setCommentsCount(pub.getComments() != null ? pub.getComments().size() : 0);
+        dto.setHeartsCount(pub.getHearts() != null ? pub.getHearts().size() : 0);
+
         dto.setImages(pub.getImages().stream().map(img -> {
             ImageResponseDto imgDto = new ImageResponseDto();
             imgDto.setId(img.getId());
@@ -96,6 +99,8 @@ public class PublicationService {
             dto.setImages(null);
             dto.setTags(null);
             dto.setPlace(null);
+            dto.setCommentsCount(0);
+            dto.setHeartsCount(0);
 
             dto.setModerated(true);
         }
