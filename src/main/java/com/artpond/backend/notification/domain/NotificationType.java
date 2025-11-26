@@ -5,5 +5,6 @@ public enum NotificationType {
     REPLY_TO_COMMENT,
     HEART_ON_POST,
     CONTENT_MODERATED,
-    WELCOME
+    WELCOME,
+    NEW_FOLLOWER
 }

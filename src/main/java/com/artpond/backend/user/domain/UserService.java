@@ -86,7 +86,7 @@ public class UserService implements UserDetailsService {
             notificationService.createNotification(
                 followed,
                 follower,
-                NotificationType.WELCOME,
+                NotificationType.NEW_FOLLOWER,
                 follower.getUserId(),
                 follower.getDisplayName() + " ha comenzado a seguirte."
             );
