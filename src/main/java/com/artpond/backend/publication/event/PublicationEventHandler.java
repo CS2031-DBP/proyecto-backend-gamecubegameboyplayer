@@ -18,6 +18,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -122,7 +123,7 @@ public class PublicationEventHandler {
     }
 
     @Async("placeProcessingExecutor")
-    @EventListener
+    @TransactionalEventListener
     public void handleAiAnalysis(AiAnalysisRequestedEvent event) {
         log.info("Starting async AI research for publication {}", event.getPublicationId());
 
