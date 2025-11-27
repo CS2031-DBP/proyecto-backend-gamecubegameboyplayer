@@ -329,8 +329,10 @@ public class PublicationService {
         return user != null && Boolean.TRUE.equals(user.getShowExplicit());
     }
 
+    @Transactional(readOnly = true)
     public PublicationResponseDto getPublicationById(Long id, User currentUser) {
-        Publication publication = publicationRepository.findById(id).orElseThrow(PublicationNotFoundException::new);
+        Publication publication = publicationRepository.findWithDetailsById(id)
+                .orElseThrow(PublicationNotFoundException::new);
 
         if (Boolean.TRUE.equals(publication.getContentWarning())) {
             if (currentUser == null)
@@ -338,8 +340,17 @@ public class PublicationService {
             if (!Boolean.TRUE.equals(currentUser.getShowExplicit()))
                 throw new ForbiddenException("Contenido explícito desactivado en tu perfil.");
         }
+
+        Boolean isLiked = false;
+        Boolean isSaved = false;
+
+        int heartsCount = publicationRepository.countHearts(id).intValue(); 
         
-        return toDto(publication, currentUser);
+        if (currentUser != null) {
+            isLiked = publicationRepository.existsHeart(id, currentUser.getUserId());
+            isSaved = publicationRepository.existsSaved(currentUser.getUserId(), id);
+        }
+        return toDto(publication, currentUser, isLiked, isSaved, heartsCount);
     }
 
     @Transactional

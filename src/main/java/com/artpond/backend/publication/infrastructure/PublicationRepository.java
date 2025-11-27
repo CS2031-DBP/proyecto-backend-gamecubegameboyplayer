@@ -92,4 +92,16 @@ public interface PublicationRepository extends JpaRepository<Publication, Long> 
 
     @Query("SELECT p.id as publicationId, COUNT(h) as count FROM Publication p JOIN p.hearts h WHERE p.id IN :pubIds GROUP BY p.id")
     List<HeartCountProjection> countHeartsByPublicationIds(@Param("pubIds") List<Long> pubIds);
+
+    // Verifica si un usuario específico le dio like a una publicación
+    @Query("SELECT COUNT(p) > 0 FROM Publication p JOIN p.hearts h WHERE p.id = :pubId AND h.userId = :userId")
+    boolean existsHeart(@Param("pubId") Long pubId, @Param("userId") Long userId);
+
+    // Verifica si un usuario guardó una publicación específica
+    @Query("SELECT COUNT(u) > 0 FROM User u JOIN u.savedPublications p WHERE u.userId = :userId AND p.id = :pubId")
+    boolean existsSaved(@Param("userId") Long userId, @Param("pubId") Long pubId);
+
+    // Cuenta el total de likes de una publicación
+    @Query("SELECT COUNT(h) FROM Publication p JOIN p.hearts h WHERE p.id = :pubId")
+    Long countHearts(@Param("pubId") Long pubId);
 }
