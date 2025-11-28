@@ -27,10 +27,11 @@ public class AiDetectionService {
     @Value("${app.python.command:python3}")
     private String pythonCommand;
 
-    public boolean analyzeImage(Long publicationId, Long userId, String imageKey, PubType type) {
+    public boolean analyzeImage(Long publicationId, Long userId, String imageKey, PubType type, String ownerIdentifier) {
         Path tempFile = null;
         try {
-            byte[] imageBytes = imageService.downloadCleanImage(imageKey, userId.toString()); 
+            byte[] imageBytes = imageService.downloadCleanImage(imageKey, ownerIdentifier); 
+            
             tempFile = Files.createTempFile("ai-check-" + publicationId, ".tmp");
             Files.write(tempFile, imageBytes);
 

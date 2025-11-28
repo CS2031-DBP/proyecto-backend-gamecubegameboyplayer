@@ -8,12 +8,14 @@ import org.springframework.context.ApplicationEvent;
 public class AiAnalysisRequestedEvent extends ApplicationEvent {
     private final Long publicationId;
     private final Long userId;
+    private final String username;
     private final PubType pubType;
 
-    public AiAnalysisRequestedEvent(Object source, Long publicationId, Long userId, PubType pubType) {
+    public AiAnalysisRequestedEvent(Object source, Long publicationId, Long userId, String username, PubType pubType) {
         super(source);
         this.publicationId = publicationId;
         this.userId = userId;
+        this.username = username;
         this.pubType = pubType;
     }
 }

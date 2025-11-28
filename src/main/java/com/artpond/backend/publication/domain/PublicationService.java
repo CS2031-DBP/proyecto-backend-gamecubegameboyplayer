@@ -279,7 +279,13 @@ public class PublicationService {
                     new PublicationCreatedEvent(this, savedPublication.getId(), dto.getOsmId(), dto.getOsmType()));
         }
         if (dto.getMachineGenerated() != true && dto.getPubType() != PubType.TEXT) {
-            eventPublisher.publishEvent(new AiAnalysisRequestedEvent(this, savedPublication.getId(), savedPublication.getAuthor().getUserId(), dto.getPubType()));
+            eventPublisher.publishEvent(new AiAnalysisRequestedEvent(
+                this, 
+                savedPublication.getId(), 
+                savedPublication.getAuthor().getUserId(), 
+                savedPublication.getAuthor().getUsername(),
+                dto.getPubType()
+            ));
         }
     }
 
@@ -464,7 +470,7 @@ public class PublicationService {
     public void retryFailedAiTask(Long taskId) {
         FailedAiTask task = failedAiRepository.findById(taskId)
                 .orElseThrow(() -> new NotFoundException("AI Task not found"));
-        eventPublisher.publishEvent(new AiAnalysisRequestedEvent(this, task.getPublicationId(), task.getUserId(), task.getPubType()));
+        eventPublisher.publishEvent(new AiAnalysisRequestedEvent(this, task.getPublicationId(), task.getUserId(), task.getUsername(), task.getPubType()));
         failedAiRepository.delete(task);
     }
 

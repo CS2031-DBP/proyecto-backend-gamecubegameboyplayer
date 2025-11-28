@@ -201,6 +201,7 @@ public class MapService {
     private PlaceDataDto mapToPlaceDataDto(JsonPlaceDataDto nominatimData) {
         PlaceDataDto trustedData = new PlaceDataDto();
         trustedData.setOsmId(nominatimData.getOsmId());
+        trustedData.setOsmType(nominatimData.getOsmType());
         trustedData.setName(nominatimData.getName() != null ? nominatimData.getName() : nominatimData.getDisplayName());
 
         trustedData.setAddress(nominatimData.getDisplayName());

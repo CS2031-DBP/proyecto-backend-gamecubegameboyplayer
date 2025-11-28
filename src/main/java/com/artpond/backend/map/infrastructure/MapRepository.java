@@ -16,7 +16,7 @@ public interface MapRepository extends JpaRepository<Place, Long> {
         SELECT 
             p.id as id, 
             p.name as name, 
-            ST_Y(p.coordinates::geometry) as latitude,
+            ST_Y(p.coordinates::geometry) as latitude, 
             ST_X(p.coordinates::geometry) as longitude,
             p.post_count as postCount
         FROM places p

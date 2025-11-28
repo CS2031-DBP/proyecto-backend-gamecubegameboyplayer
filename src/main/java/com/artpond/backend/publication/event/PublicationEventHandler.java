@@ -18,6 +18,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation; // Importar Propagation
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.Duration;
@@ -27,6 +29,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @Slf4j
 public class PublicationEventHandler {
+    // ... (resto de inyecciones igual) ...
     private final MapService mapService;
     private final AiDetectionService aiDetectionService;
     private final PublicationRepository publicationRepository;
@@ -40,9 +43,11 @@ public class PublicationEventHandler {
         .addLimit(limit -> limit.capacity(1).refillIntervally(1, Duration.ofSeconds(1)))
         .build();
     
+    // ... (handlePublicationCreated sin cambios) ...
     @Async("placeProcessingExecutor")
     @EventListener
     public void handlePublicationCreated(PublicationCreatedEvent event) {
+        // ... (código existente) ...
         int attemptNumber = event.getAttemptNumber();
 
         if (attemptNumber > 1) {
@@ -94,6 +99,7 @@ public class PublicationEventHandler {
     }
     
     private void retryIfPossible(PublicationCreatedEvent event, Exception cause) {
+         // ... (código existente) ...
         if (event.getAttemptNumber() < MAX_RETRY_ATTEMPTS) {
             int nextAttempt = event.getAttemptNumber() + 1;
             log.info("Retry publication {} for later (attempt count {})", 
@@ -124,6 +130,7 @@ public class PublicationEventHandler {
 
     @Async("placeProcessingExecutor")
     @TransactionalEventListener
+    @Transactional(propagation = Propagation.REQUIRES_NEW) 
     public void handleAiAnalysis(AiAnalysisRequestedEvent event) {
         log.info("Starting async AI research for publication {}", event.getPublicationId());
 
@@ -139,7 +146,8 @@ public class PublicationEventHandler {
                 event.getPublicationId(),
                 event.getUserId(),
                 imageKey, 
-                event.getPubType()
+                event.getPubType(),
+                event.getUsername()
             );
 
             if (isAi) {
@@ -154,6 +162,7 @@ public class PublicationEventHandler {
             log.error("Async AI Analysis failed", e);
             FailedAiTask failure = new FailedAiTask();
             failure.setPublicationId(event.getPublicationId());
+            failure.setUsername(event.getUsername());
             failure.setPubType(event.getPubType());
             failure.setUserId(event.getUserId());
             failure.setErrorMessage(e.getMessage() != null ? e.getMessage() : "Unknown error");

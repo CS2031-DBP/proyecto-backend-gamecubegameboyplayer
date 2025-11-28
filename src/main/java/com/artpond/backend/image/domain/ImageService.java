@@ -45,6 +45,8 @@ public class ImageService {
 
     private static final String AVATAR_PREFIX = "avatars/";
 
+    private static final int WEB_OPTIMIZED_WIDTH = 1920; 
+
     private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp");
 
@@ -114,19 +116,28 @@ public class ImageService {
         String timestamp = String.valueOf(System.currentTimeMillis());
         String baseFileName = userId + "/pub-" + publicationId + "-img-" + index + "-" + timestamp;
 
+        // 1. Guardar imagen original (CLEAN) tal cual para el autor/ventas
         String cleanFileName = CLEAN_PREFIX + baseFileName + "." + format;
         byte[] cleanBytes = imageProcessingService.bufferedImageToBytes(originalImage, format);
         uploadToS3(cleanFileName, cleanBytes, file.getContentType(), false);
 
+        // 2. Procesar imagen PÚBLICA (Redimensionar + Marca de agua)
         String publicFileName = PUBLIC_PREFIX + baseFileName + "." + format;
 
+        BufferedImage processedImage = originalImage;
+        
+        // a) Redimensionar si es muy grande para la web
+        processedImage = imageProcessingService.resizeImage(processedImage, WEB_OPTIMIZED_WIDTH);
+
+        // b) Aplicar marca de agua
         if (watermark != null) {
-            BufferedImage watermarkedImage = imageProcessingService.applyWatermark(originalImage, watermark);
-            byte[] watermarkedBytes = imageProcessingService.bufferedImageToBytes(watermarkedImage, format);
-            uploadToS3(publicFileName, watermarkedBytes, file.getContentType(), true);
-        } else {
-            uploadToS3(publicFileName, cleanBytes, file.getContentType(), true);
+            processedImage = imageProcessingService.applyWatermark(processedImage, watermark);
         }
+
+        byte[] publicBytes = imageProcessingService.bufferedImageToBytes(processedImage, format);
+        
+        // c) Subir con cabeceras de Caché
+        uploadToS3(publicFileName, publicBytes, file.getContentType(), true);
 
         String publicUrl = s3Client.getUrl(bucketName, publicFileName).toString();
         return new ImageUploadDto(cleanFileName, publicFileName, publicUrl);
@@ -136,8 +147,9 @@ public class ImageService {
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(data.length);
         metadata.setContentType(contentType);
-
+        
         if (isPublic) {
+            metadata.setHeader("Cache-Control", "public, max-age=31536000, immutable");
             metadata.setHeader("x-amz-acl", "public-read");
         }
 
