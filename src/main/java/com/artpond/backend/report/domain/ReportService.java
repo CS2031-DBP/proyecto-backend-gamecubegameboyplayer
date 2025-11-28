@@ -6,11 +6,14 @@ import com.artpond.backend.publication.domain.Publication;
 import com.artpond.backend.publication.exception.PublicationNotFoundException;
 import com.artpond.backend.publication.infrastructure.PublicationRepository;
 import com.artpond.backend.report.dto.CreateReportDto;
+import com.artpond.backend.report.dto.ReportDto;
 import com.artpond.backend.report.infrastructure.ReportRepository;
 import com.artpond.backend.user.domain.User;
 import com.artpond.backend.user.exception.UserNotFoundException;
 import com.artpond.backend.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ReportService {
 
+    private final ModelMapper modelMapper;
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
     private final PublicationRepository publicationRepository;
@@ -53,8 +57,8 @@ public class ReportService {
         reportRepository.save(report);
     }
 
-    public Page<Report> getReportsByStatus(ReportStatus status, Pageable pageable) {
-        return reportRepository.findByStatusOrderByCreatedAtDesc(status, pageable);
+    public Page<ReportDto> getReportsByStatus(ReportStatus status, Pageable pageable) {
+        return reportRepository.findByStatusOrderByCreatedAtDesc(status, pageable).map(m -> modelMapper.map(m, ReportDto.class));
     }
 
     @Transactional

@@ -29,4 +29,5 @@ public class PublicationResponseDto {
     private List<ImageResponseDto> images;
     private List<TagsResponseDto> tags;
     private PlaceDataDto place;
+    private String pubType;
 }

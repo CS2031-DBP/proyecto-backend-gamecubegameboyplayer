@@ -3,6 +3,7 @@ package com.artpond.backend.report.application;
 import com.artpond.backend.report.domain.Appeal;
 import com.artpond.backend.report.domain.AppealService;
 import com.artpond.backend.report.domain.AppealStatus;
+import com.artpond.backend.report.dto.AppealDto;
 import com.artpond.backend.report.dto.CreateAppealDto;
 import com.artpond.backend.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,7 @@ public class AppealController {
 
     @GetMapping("/admin/list")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
-    public ResponseEntity<Page<Appeal>> getAppeals(Pageable pageable) {
+    public ResponseEntity<Page<AppealDto>> getAppeals(Pageable pageable) {
         return ResponseEntity.ok(appealService.getPendingAppeals(pageable));
     }
 

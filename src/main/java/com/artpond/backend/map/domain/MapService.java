@@ -52,9 +52,9 @@ public class MapService {
         boolean canSeeExplicit = currentUser != null && Boolean.TRUE.equals(currentUser.getShowExplicit());
         Page<Publication> posts;
         if (canSeeExplicit) {
-            posts = publicationRepository.findByPlace_IdOrderByCreationDate(placeId, pageable);
+            posts = publicationRepository.findByPlace_IdAndModeratedFalseOrderByCreationDate(placeId, pageable);
         } else {
-            posts = publicationRepository.findByPlace_IdAndContentWarningFalseOrderByCreationDate(placeId, pageable);
+            posts = publicationRepository.findByPlace_IdAndContentWarningFalseAndModeratedFalseOrderByCreationDate(placeId, pageable);
         }
         return posts.map(publication -> modelMapper.map(publication, PublicationResponseDto.class));
     }

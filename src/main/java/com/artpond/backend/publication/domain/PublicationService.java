@@ -109,6 +109,7 @@ public class PublicationService {
         dto.setCreationDate(pub.getCreationDate());
         dto.setAuthor(modelMapper.map(pub.getAuthor(), PublicUserDto.class));
         dto.setCommentsCount(pub.getCommentsCount());
+        dto.setPubType(pub.getPubType().toString());
 
         if (precalcHeartsCount != null) {
             dto.setHeartsCount(precalcHeartsCount);
@@ -278,16 +279,30 @@ public class PublicationService {
         }
     }
 
+    public Page<PublicationResponseDto> getAllPublicationsForAdmin(Pageable pageable, PubType pubType) {
+        Page<Publication> page;
+        
+        if (pubType != null) {
+             page = publicationRepository.findByPubTypeAndModeratedTrue(pubType, pageable);
+        } else {
+             page = publicationRepository.findByModeratedTrue(pageable);
+        }
+
+        return enrichPage(page, null); 
+    }
+
     public Page<PublicationResponseDto> getAllPublications(Pageable pageable, User currentUser, PubType pubType) {
         boolean canSeeExplicit = canSeeExplicitContent(currentUser);
         Page<Publication> page;
 
         if (pubType != null) {
-            page = canSeeExplicit ? publicationRepository.findByPubType(pubType, pageable)
-                    : publicationRepository.findByPubTypeAndContentWarningFalse(pubType, pageable);
+            page = canSeeExplicit 
+                    ? publicationRepository.findByPubTypeAndModeratedFalse(pubType, pageable)
+                    : publicationRepository.findByPubTypeAndContentWarningFalseAndModeratedFalse(pubType, pageable);
         } else {
-            page = canSeeExplicit ? publicationRepository.findAll(pageable)
-                    : publicationRepository.findByContentWarningFalse(pageable);
+            page = canSeeExplicit 
+                    ? publicationRepository.findByModeratedFalse(pageable)
+                    : publicationRepository.findByContentWarningFalseAndModeratedFalse(pageable);
         }
 
         return enrichPage(page, currentUser);
@@ -295,16 +310,17 @@ public class PublicationService {
 
     public Page<PublicationResponseDto> getUserPublications(Pageable pageable, User currentUser, Long id, PubType pubType) {
         boolean canSeeExplicit = canSeeExplicitContent(currentUser);
+        User author = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException());
         Page<Publication> page;
 
-        User author = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException());
-
         if (pubType != null) {
-            page = canSeeExplicit ? publicationRepository.findByAuthorAndPubType(author, pubType, pageable)
-                    : publicationRepository.findByAuthorAndPubTypeAndContentWarningFalse(author, pubType, pageable);
+            page = canSeeExplicit 
+                    ? publicationRepository.findByAuthorAndPubTypeAndModeratedFalse(author, pubType, pageable)
+                    : publicationRepository.findByAuthorAndPubTypeAndContentWarningFalseAndModeratedFalse(author, pubType, pageable);
         } else {
-            page = canSeeExplicit ? publicationRepository.findByAuthor(author, pageable)
-                    : publicationRepository.findByAuthorAndContentWarningFalse(author, pageable);
+            page = canSeeExplicit 
+                    ? publicationRepository.findByAuthorAndModeratedFalse(author, pageable)
+                    : publicationRepository.findByAuthorAndContentWarningFalseAndModeratedFalse(author, pageable);
         }
 
         return enrichPage(page, currentUser);
@@ -313,8 +329,8 @@ public class PublicationService {
     public Page<PublicationResponseDto> getPublicationsByTag(String tagName, Pageable pageable, User currentUser) {
         Tag tag = tagRepository.findByName(tagName).orElseThrow(() -> new NotFoundException("Tag no existe"));
         boolean canSeeExplicit = canSeeExplicitContent(currentUser);
-        Page<Publication> page = canSeeExplicit ? publicationRepository.findByTagsContaining(tag, pageable)
-                : publicationRepository.findByTagsContainingAndContentWarningFalse(tag, pageable);
+        Page<Publication> page = canSeeExplicit ? publicationRepository.findByTagsContainingAndModeratedFalse(tag, pageable)
+                : publicationRepository.findByTagsContainingAndContentWarningFalseAndModeratedFalse(tag, pageable);
         return enrichPage(page, currentUser);
     }
 

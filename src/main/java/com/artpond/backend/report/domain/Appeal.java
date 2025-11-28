@@ -25,7 +25,7 @@ public class Appeal {
     private User author;
 
     @Column(length = 1000)
-    private String justification; // Por qué dice el autor que es humano (link a timelapse, etc.)
+    private String justification; // razon
 
     @Enumerated(EnumType.STRING)
     private AppealStatus status = AppealStatus.PENDING;

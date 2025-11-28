@@ -3,12 +3,14 @@ package com.artpond.backend.report.domain;
 import com.artpond.backend.definitions.exception.BadRequestException;
 import com.artpond.backend.definitions.exception.ForbiddenException;
 import com.artpond.backend.definitions.exception.NotFoundException;
+import com.artpond.backend.report.dto.AppealDto;
 import com.artpond.backend.report.infrastructure.AppealRepository;
 import com.artpond.backend.publication.domain.Publication;
 import com.artpond.backend.publication.infrastructure.PublicationRepository;
 import com.artpond.backend.user.domain.User;
 import com.artpond.backend.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class AppealService {
+
+    private final ModelMapper modelMapper;
 
     private final AppealRepository appealRepository;
     private final PublicationRepository publicationRepository;
@@ -46,8 +50,8 @@ public class AppealService {
         appealRepository.save(appeal);
     }
 
-    public Page<Appeal> getPendingAppeals(Pageable pageable) {
-        return appealRepository.findByStatusOrderByCreatedAtDesc(AppealStatus.PENDING, pageable);
+    public Page<AppealDto> getPendingAppeals(Pageable pageable) {
+        return appealRepository.findByStatusOrderByCreatedAtDesc(AppealStatus.PENDING, pageable).map(m -> modelMapper.map(m, AppealDto.class));
     }
 
     @Transactional

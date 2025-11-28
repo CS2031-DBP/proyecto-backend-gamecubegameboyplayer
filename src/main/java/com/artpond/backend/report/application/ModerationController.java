@@ -3,9 +3,12 @@ package com.artpond.backend.report.application;
 import com.artpond.backend.report.domain.Report;
 import com.artpond.backend.report.domain.ReportService;
 import com.artpond.backend.report.domain.ReportStatus;
+import com.artpond.backend.report.dto.ReportDto;
+import com.artpond.backend.publication.domain.PubType;
 import com.artpond.backend.publication.domain.PublicationService;
 import com.artpond.backend.publication.dto.FailedAiTaskDto;
 import com.artpond.backend.publication.dto.FailedPlaceTaskDto;
+import com.artpond.backend.publication.dto.PublicationResponseDto;
 import com.artpond.backend.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,7 +29,7 @@ public class ModerationController {
     private final PublicationService publicationService;
 
     @GetMapping("/reports")
-    public ResponseEntity<Page<Report>> getReports(
+    public ResponseEntity<Page<ReportDto>> getReports(
             @RequestParam(defaultValue = "PENDING") ReportStatus status,
             Pageable pageable) {
         return ResponseEntity.ok(reportService.getReportsByStatus(status, pageable));
@@ -77,5 +80,15 @@ public class ModerationController {
     public ResponseEntity<Void> dismissAiTask(@PathVariable Long taskId) {
         publicationService.deleteFailedAiTask(taskId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/publications")
+    public ResponseEntity<Page<PublicationResponseDto>> getAllPublicationsForModeration(
+            Pageable pageable,
+            @RequestParam(required = false) PubType pubType) {
+        
+        return ResponseEntity.ok(
+            publicationService.getAllPublicationsForAdmin(pageable, pubType)
+        );
     }
 }

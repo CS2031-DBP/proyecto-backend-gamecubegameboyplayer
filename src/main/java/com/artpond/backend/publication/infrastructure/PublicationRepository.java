@@ -23,47 +23,59 @@ import com.artpond.backend.user.domain.User;
 public interface PublicationRepository extends JpaRepository<Publication, Long> {
 
     @EntityGraph(attributePaths = {"author", "place"})
-    Page<Publication> findByTagsContaining(Tag tag, Pageable pageable);
+    Page<Publication> findByTagsContainingAndModeratedFalse(Tag tag, Pageable pageable);
     
     @EntityGraph(attributePaths = {"author", "place"})
-    Page<Publication> findByTagsContainingAndContentWarningFalse(Tag tag, Pageable pageable);
+    Page<Publication> findByTagsContainingAndContentWarningFalseAndModeratedFalse(Tag tag, Pageable pageable);
 
     @EntityGraph(attributePaths = {"author", "place"})
-    Page<Publication> findByPlace_IdOrderByCreationDate(Long placeId, Pageable pageable);
+    Page<Publication> findByPlace_IdAndModeratedFalseOrderByCreationDate(Long placeId, Pageable pageable);
     
     @EntityGraph(attributePaths = {"author", "place"})
-    Page<Publication> findByPlace_IdAndContentWarningFalseOrderByCreationDate(Long placeId, Pageable pageable);
+    Page<Publication> findByPlace_IdAndContentWarningFalseAndModeratedFalseOrderByCreationDate(Long placeId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"author", "place"})
+    Page<Publication> findByModeratedFalse(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"author", "place"})
+    Page<Publication> findByContentWarningFalseAndModeratedFalse(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"author", "place"})
+    Page<Publication> findByPubTypeAndModeratedFalse(PubType pubType, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"author", "place"})
+    Page<Publication> findByPubTypeAndContentWarningFalseAndModeratedFalse(PubType pubType, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"author", "place"})
+    Page<Publication> findByAuthorAndModeratedFalse(User author, Pageable pageable);
+    
+    @EntityGraph(attributePaths = {"author", "place"})
+    Page<Publication> findByAuthorAndPubTypeAndModeratedFalse(User author, PubType pubType, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"author", "place"})
+    Page<Publication> findByAuthorAndContentWarningFalseAndModeratedFalse(User author, Pageable pageable);
+    
+    @EntityGraph(attributePaths = {"author", "place"})
+    Page<Publication> findByAuthorAndPubTypeAndContentWarningFalseAndModeratedFalse(User author, PubType pubType, Pageable pageable);
+
+    // private entities
 
     Long countByPlace_IdAndModeratedIsFalse(Long placeId);
-
-    @EntityGraph(attributePaths = {"author", "place"})
-    Page<Publication> findByContentWarningFalse(Pageable pageable);
     
     @EntityGraph(attributePaths = {"author", "place"})
     @Override
     @NonNull Page<Publication> findAll(@NonNull Pageable pageable);
 
     @EntityGraph(attributePaths = {"author", "place"})
-    Page<Publication> findByPubType(PubType pubType, Pageable pageable);
+    Page<Publication> findByModeratedTrue(Pageable pageable);
 
     @EntityGraph(attributePaths = {"author", "place"})
-    Page<Publication> findByPubTypeAndContentWarningFalse(PubType pubType, Pageable pageable);
+    Page<Publication> findByPubTypeAndModeratedTrue(PubType pubType, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"author", "place"})
-    Page<Publication> findByAuthor(User author, Pageable pageable);
-    
-    @EntityGraph(attributePaths = {"author", "place"})
-    Page<Publication> findByAuthorAndPubType(User author, PubType pubType, Pageable pageable);
-
-    @EntityGraph(attributePaths = {"author", "place"})
-    Page<Publication> findByAuthorAndContentWarningFalse(User author, Pageable pageable);
-    
-    @EntityGraph(attributePaths = {"author", "place"})
-    Page<Publication> findByAuthorAndPubTypeAndContentWarningFalse(User author, PubType pubType, Pageable pageable);
-
-    @Query("SELECT p FROM User u JOIN u.savedPublications p WHERE u.userId = :userId")
+    @Query("SELECT p FROM User u JOIN u.savedPublications p WHERE u.userId = :userId AND p.moderated = false")
     @EntityGraph(attributePaths = {"author", "place"})
     Page<Publication> findSavedPublicationsByUser(@Param("userId") Long userId, Pageable pageable);
+    
 
     @Query("""
         SELECT DISTINCT p FROM Publication p 
@@ -81,10 +93,6 @@ public interface PublicationRepository extends JpaRepository<Publication, Long> 
         @Param("showExplicit") boolean showExplicit, 
         Pageable pageable
     );
-
-    @EntityGraph(attributePaths = {"images", "tags", "author", "place", "hearts"})
-    @Query("SELECT p FROM Publication p WHERE p.id = :id")
-    Optional<Publication> findWithDetailsById(@Param("id") Long id);
 
     @Query("""
         SELECT p.id FROM Publication p 
@@ -133,4 +141,6 @@ public interface PublicationRepository extends JpaRepository<Publication, Long> 
 
     @Query("SELECT COUNT(h) FROM Publication p JOIN p.hearts h WHERE p.id = :pubId")
     Long countHearts(@Param("pubId") Long pubId);
+
+    Optional<Publication> findWithDetailsById(Long id);
 }

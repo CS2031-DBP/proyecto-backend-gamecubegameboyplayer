@@ -94,7 +94,6 @@ public class AuthenticationController {
     @PostMapping("/forgot-password")
     public ResponseEntity<Void> forgotPassword(@RequestBody @Valid ForgotPasswordRequestDto dto) {
         authenticationService.forgotPassword(dto.getEmail());
-        // Siempre devolvemos OK para evitar enumeración de usuarios
         return ResponseEntity.ok().build();
     }
 
