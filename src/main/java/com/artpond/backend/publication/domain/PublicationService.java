@@ -98,26 +98,23 @@ public class PublicationService {
         });
     }
 
-    // Sobrecarga de toDto para aceptar datos precalculados
     private PublicationResponseDto toDto(Publication pub, User viewer, Boolean precalcLiked, Boolean precalcSaved, Integer precalcHeartsCount) {
         PublicationResponseDto dto = new PublicationResponseDto();
         dto.setId(pub.getId());
         dto.setDescription(pub.getDescription());
         dto.setContentWarning(pub.getContentWarning());
         dto.setMachineGenerated(pub.getMachineGenerated());
+        dto.setManuallyVerified(pub.getManuallyVerified());
+        dto.setModerated(pub.getModerated());
         dto.setCreationDate(pub.getCreationDate());
         dto.setAuthor(modelMapper.map(pub.getAuthor(), PublicUserDto.class));
+        dto.setCommentsCount(pub.getCommentsCount());
 
-        dto.setCommentsCount(pub.getCommentsCount()); // Este es safe si es un count simple o size()
-
-        // --- Lógica de Likes y Guardados ---
         if (precalcHeartsCount != null) {
-            // Usamos los datos optimizados si vienen
             dto.setHeartsCount(precalcHeartsCount);
             dto.setLikedByMe(precalcLiked != null ? precalcLiked : false);
             dto.setSavedByMe(precalcSaved != null ? precalcSaved : false);
         } else {
-            // Fallback a Lazy Loading (Solo para getById individual)
             dto.setHeartsCount(pub.getHeartsCount()); 
             if (viewer != null) {
                 boolean isLiked = pub.getHearts().stream()
@@ -133,7 +130,6 @@ public class PublicationService {
             }
         }
 
-        // --- Mapeo de Imágenes ---
         dto.setImages(pub.getImages().stream().map(img -> {
             ImageResponseDto imgDto = new ImageResponseDto();
             imgDto.setId(img.getId());
@@ -151,14 +147,12 @@ public class PublicationService {
             return imgDto;
         }).collect(toList()));
 
-        // --- Mapeo de Tags y Lugar ---
         dto.setTags(pub.getTags().stream()
                         .map(tg -> modelMapper.map(tg, TagsResponseDto.class))
                         .collect(toList()));
 
         dto.setPlace(pub.getPlace() != null ? modelMapper.map(pub.getPlace(), PlaceDataDto.class) : null);
 
-        // --- Moderación ---
         if (Boolean.TRUE.equals(pub.getModerated())) {
             dto.setDescription("[MODERATED CONTENT]");
             dto.setImages(null);
@@ -172,7 +166,6 @@ public class PublicationService {
         return dto;
     }
 
-    // Versión simple para compatibilidad interna o casos sin optimización
     private PublicationResponseDto toDto(Publication pub, User viewer) {
         return toDto(pub, viewer, null, null, null);
     }
@@ -343,13 +336,14 @@ public class PublicationService {
 
         Boolean isLiked = false;
         Boolean isSaved = false;
-
+        
         int heartsCount = publicationRepository.countHearts(id).intValue(); 
         
         if (currentUser != null) {
             isLiked = publicationRepository.existsHeart(id, currentUser.getUserId());
             isSaved = publicationRepository.existsSaved(currentUser.getUserId(), id);
         }
+        
         return toDto(publication, currentUser, isLiked, isSaved, heartsCount);
     }
 

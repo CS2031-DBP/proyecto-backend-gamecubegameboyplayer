@@ -14,10 +14,10 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import com.artpond.backend.user.domain.User;
-
 
 @Repository
 public interface PublicationRepository extends JpaRepository<Publication, Long> {
@@ -41,7 +41,7 @@ public interface PublicationRepository extends JpaRepository<Publication, Long> 
     
     @EntityGraph(attributePaths = {"author", "place"})
     @Override
-    Page<Publication> findAll(Pageable pageable);
+    @NonNull Page<Publication> findAll(@NonNull Pageable pageable);
 
     @EntityGraph(attributePaths = {"author", "place"})
     Page<Publication> findByPubType(PubType pubType, Pageable pageable);
@@ -65,13 +65,14 @@ public interface PublicationRepository extends JpaRepository<Publication, Long> 
     @EntityGraph(attributePaths = {"author", "place"})
     Page<Publication> findSavedPublicationsByUser(@Param("userId") Long userId, Pageable pageable);
 
-    // Feed principal
     @Query("""
-        SELECT p FROM Publication p 
-        WHERE p.author.userId IN (
-            SELECT f.userId FROM User u JOIN u.following f WHERE u.userId = :userId
+        SELECT DISTINCT p FROM Publication p 
+        JOIN p.author a
+        WHERE a IN (
+            SELECT f FROM User u JOIN u.following f WHERE u.userId = :userId
         )
         AND (:showExplicit = true OR p.contentWarning = false)
+        AND p.moderated = false
         ORDER BY p.creationDate DESC
     """)
     @EntityGraph(attributePaths = {"author", "place"})
@@ -81,27 +82,55 @@ public interface PublicationRepository extends JpaRepository<Publication, Long> 
         Pageable pageable
     );
 
-    @EntityGraph(attributePaths = {"images", "tags", "author", "place"})
-    Optional<Publication> findWithDetailsById(Long id);
+    @EntityGraph(attributePaths = {"images", "tags", "author", "place", "hearts"})
+    @Query("SELECT p FROM Publication p WHERE p.id = :id")
+    Optional<Publication> findWithDetailsById(@Param("id") Long id);
 
-    @Query("SELECT p.id FROM Publication p JOIN p.hearts h WHERE h.userId = :userId AND p.id IN :pubIds")
-    Set<Long> findLikedPublicationIdsByUser(@Param("userId") Long userId, @Param("pubIds") List<Long> pubIds);
+    @Query("""
+        SELECT p.id FROM Publication p 
+        JOIN p.hearts h 
+        WHERE h.userId = :userId AND p.id IN :pubIds
+    """)
+    Set<Long> findLikedPublicationIdsByUser(
+        @Param("userId") Long userId, 
+        @Param("pubIds") List<Long> pubIds
+    );
 
-    @Query("SELECT p.id FROM User u JOIN u.savedPublications p WHERE u.userId = :userId AND p.id IN :pubIds")
-    Set<Long> findSavedPublicationIdsByUser(@Param("userId") Long userId, @Param("pubIds") List<Long> pubIds);
+    @Query("""
+        SELECT p.id FROM User u 
+        JOIN u.savedPublications p 
+        WHERE u.userId = :userId AND p.id IN :pubIds
+    """)
+    Set<Long> findSavedPublicationIdsByUser(
+        @Param("userId") Long userId, 
+        @Param("pubIds") List<Long> pubIds
+    );
 
-    @Query("SELECT p.id as publicationId, COUNT(h) as count FROM Publication p JOIN p.hearts h WHERE p.id IN :pubIds GROUP BY p.id")
+    @Query("""
+        SELECT p.id as publicationId, COUNT(h) as count 
+        FROM Publication p 
+        LEFT JOIN p.hearts h 
+        WHERE p.id IN :pubIds 
+        GROUP BY p.id
+    """)
     List<HeartCountProjection> countHeartsByPublicationIds(@Param("pubIds") List<Long> pubIds);
 
-    // Verifica si un usuario específico le dio like a una publicación
-    @Query("SELECT COUNT(p) > 0 FROM Publication p JOIN p.hearts h WHERE p.id = :pubId AND h.userId = :userId")
+    @Query("""
+        SELECT CASE WHEN COUNT(h) > 0 THEN true ELSE false END 
+        FROM Publication p 
+        JOIN p.hearts h 
+        WHERE p.id = :pubId AND h.userId = :userId
+    """)
     boolean existsHeart(@Param("pubId") Long pubId, @Param("userId") Long userId);
 
-    // Verifica si un usuario guardó una publicación específica
-    @Query("SELECT COUNT(u) > 0 FROM User u JOIN u.savedPublications p WHERE u.userId = :userId AND p.id = :pubId")
+    @Query("""
+        SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END 
+        FROM User u 
+        JOIN u.savedPublications p 
+        WHERE u.userId = :userId AND p.id = :pubId
+    """)
     boolean existsSaved(@Param("userId") Long userId, @Param("pubId") Long pubId);
 
-    // Cuenta el total de likes de una publicación
     @Query("SELECT COUNT(h) FROM Publication p JOIN p.hearts h WHERE p.id = :pubId")
     Long countHearts(@Param("pubId") Long pubId);
 }

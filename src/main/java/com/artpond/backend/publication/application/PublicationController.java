@@ -18,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.List;
 
@@ -33,11 +34,14 @@ public class PublicationController {
     public ResponseEntity<PublicationCreatedDto> createPublication(
             @RequestPart("data") @Valid PublicationRequestDto dto,
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
-            @AuthenticationPrincipal User userDetails) {
+            @AuthenticationPrincipal User userDetails) throws MalformedURLException {
 
         PublicationCreatedDto createdPublication = publicationService.createPublication(dto, images,
                 userDetails.getUsername());
-        return ResponseEntity.created(URI.create("/publication/" + createdPublication.getId()))
+        URI location = URI.create("/publication/" + createdPublication.getId());
+        createdPublication.setUrl(location.toURL().toString());
+
+        return ResponseEntity.created(location)
                 .body(createdPublication);
     }
 
@@ -97,9 +101,9 @@ public class PublicationController {
     @GetMapping("/following")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<PublicationResponseDto>> getFeed(
-            Pageable pageable, 
+            Pageable pageable,
             @AuthenticationPrincipal User userDetails) {
-        
+
         return ResponseEntity.ok(publicationService.getFeed(pageable, userDetails));
     }
 }
