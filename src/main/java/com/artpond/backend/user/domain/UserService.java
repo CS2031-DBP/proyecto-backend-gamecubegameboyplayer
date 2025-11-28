@@ -173,6 +173,8 @@ public class UserService implements UserDetailsService {
             if (dto.getDescription() != null) user.setDescription(dto.getDescription());
             if (dto.getShowExplicit() != null) user.setShowExplicit(dto.getShowExplicit());
             if (dto.getEmail() != null) changeEmail(user, dto.getEmail());
+            if (dto.getUsername() != null) changeUsername(user, dto.getUsername());
+            if (dto.getDisplayName() != null) changeDisplayName(user, dto.getDisplayName());
         }
 
         return modelMapper.map(userRepository.save(user), UserResponseDto.class);
@@ -181,8 +183,28 @@ public class UserService implements UserDetailsService {
     private void changeEmail(User user, @Email String newMail) {
         String pastMail = user.getEmail();
         if (!pastMail.equals(newMail)) {
+            if (userRepository.findByEmail(newMail).isPresent()) {
+                throw new BadRequestException("El correo electrónico ya está en uso por otro usuario.");
+            }
             user.setEmail(newMail);
             eventPublisher.publishEvent(new UserUpdatedEvent(pastMail, user.getUsername()));
+        }
+    }
+
+    private void changeUsername(User user, String username) {
+        String pastMail = user.getUsername();
+        if (!pastMail.equals(username)) {
+            if (userRepository.findByUsername(username).isPresent()) {
+                throw new BadRequestException("Este username ya está en uso por otro usuario.");
+            }
+            user.setUsername(username);
+        }
+    }
+
+    private void changeDisplayName(User user, String displayName) {
+        String pastMail = user.getDisplayName();
+        if (!pastMail.equals(displayName)) {
+            user.setDisplayName(displayName);
         }
     }
 

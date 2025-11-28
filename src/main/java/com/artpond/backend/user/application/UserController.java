@@ -21,6 +21,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor
@@ -33,6 +34,16 @@ public class UserController {
     public ResponseEntity<UserDetailsDto> getUsers(@PathVariable Long id) {
         return ResponseEntity.ok(modelMapper.map(userService.getUserById(id), UserDetailsDto.class));
     }
+
+    @GetMapping("/data/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserResponseDto> getCurrentUser(@AuthenticationPrincipal User userDetails) {
+        return ResponseEntity.ok(modelMapper.map(
+            userService.getUserById(userDetails.getUserId()), 
+            UserResponseDto.class
+        ));
+    }
+    
 
     @GetMapping("/{username}")
     public ResponseEntity<PublicUserDto> getMethodName(@PathVariable String username) {

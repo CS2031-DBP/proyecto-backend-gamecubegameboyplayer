@@ -5,7 +5,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class UserResponseDto extends PublicUserDto {
+public class UserResponseDto extends UserDetailsDto {
     private String email;
-    private String description;
+    private Boolean showExplicit;
 }

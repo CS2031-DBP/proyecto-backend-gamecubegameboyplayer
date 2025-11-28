@@ -245,12 +245,16 @@ public class PublicationService {
     }
 
     private void validatePublicationRequest(PublicationRequestDto dto, List<MultipartFile> imageFiles, User user) {
+        if (dto.getContentWarning() == true && user.getShowExplicit() != true) {
+            throw new PublicationCreationException("No puedes crear un post explicito sin el permiso correspondiente.");
+        }
+        
         if (dto.getPubType() == PubType.TEXT) {
             if (imageFiles != null && !imageFiles.isEmpty()) {
-                throw new BadRequestException("Los posts de comunidad (TEXT) no pueden llevar imágenes.");
+                throw new PublicationCreationException("Los posts de comunidad (TEXT) no pueden llevar imágenes.");
             }
             if (dto.getDescription() == null || dto.getDescription().trim().isEmpty()) {
-                throw new BadRequestException("La descripción no puede estar vacía en un post de texto.");
+                throw new PublicationCreationException("La descripción no puede estar vacía en un post de texto.");
             }
         } else {
             if (imageFiles == null || imageFiles.isEmpty()) {
