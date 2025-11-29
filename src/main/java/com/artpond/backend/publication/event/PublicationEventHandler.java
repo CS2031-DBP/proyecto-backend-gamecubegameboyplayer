@@ -156,6 +156,8 @@ public class PublicationEventHandler {
                 publicationRepository.save(publication);
             } else {
                 log.info("publication {} picked up the pencil :D", event.getPublicationId());
+                publication.setManuallyVerified(true);
+                publicationRepository.save(publication);
             }
 
         } catch (Exception e) {
