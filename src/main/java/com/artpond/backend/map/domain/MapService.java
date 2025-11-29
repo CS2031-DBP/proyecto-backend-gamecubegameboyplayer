@@ -22,6 +22,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.artpond.backend.definitions.exception.BadRequestException;
 import com.artpond.backend.definitions.exception.NotFoundException;
+import com.artpond.backend.image.domain.ImageService;
+import com.artpond.backend.image.dto.ImageResponseDto;
 import com.artpond.backend.map.dto.JsonPlaceDataDto;
 import com.artpond.backend.map.dto.PlaceDataDto;
 import com.artpond.backend.map.dto.PlaceMapSummaryDto;
@@ -30,16 +32,20 @@ import com.artpond.backend.map.infrastructure.MapRepository;
 import com.artpond.backend.publication.domain.Publication;
 import com.artpond.backend.publication.dto.PublicationResponseDto;
 import com.artpond.backend.publication.infrastructure.PublicationRepository;
+import com.artpond.backend.tag.dto.TagsResponseDto;
 import com.artpond.backend.user.domain.User;
+import com.artpond.backend.user.dto.PublicUserDto;
 
 import lombok.RequiredArgsConstructor;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class MapService {
     private final RestTemplate restTemplate;
     private final PublicationRepository publicationRepository;
+    private final ImageService imageService;
 
     private static final int MAX_RESULTS_LIMIT = 150;
     private static final double MAX_VIEWPORT_DEGREE_DIFF = 1.0;
@@ -56,7 +62,72 @@ public class MapService {
         } else {
             posts = publicationRepository.findByPlace_IdAndContentWarningFalseAndModeratedFalseOrderByCreationDate(placeId, pageable);
         }
-        return posts.map(publication -> modelMapper.map(publication, PublicationResponseDto.class));
+        
+        return posts.map(pub -> toDto(pub, currentUser));
+    }
+
+    private PublicationResponseDto toDto(Publication pub, User viewer) {
+        PublicationResponseDto dto = new PublicationResponseDto();
+        dto.setId(pub.getId());
+        dto.setDescription(pub.getDescription());
+        dto.setContentWarning(pub.getContentWarning());
+        dto.setMachineGenerated(pub.getMachineGenerated());
+        dto.setCreationDate(pub.getCreationDate());
+        dto.setPubType(pub.getPubType().toString());
+        dto.setManuallyVerified(pub.getManuallyVerified());
+        dto.setModerated(pub.getModerated());
+        
+        dto.setAuthor(modelMapper.map(pub.getAuthor(), PublicUserDto.class));
+        dto.setCommentsCount(pub.getComments() != null ? pub.getComments().size() : 0);
+        dto.setHeartsCount(pub.getHearts() != null ? pub.getHearts().size() : 0);
+        
+        if (viewer != null) {
+            boolean isLiked = pub.getHearts().stream()
+                    .anyMatch(u -> u.getUserId().equals(viewer.getUserId()));
+            dto.setLikedByMe(isLiked);
+            
+            boolean isSaved = viewer.getSavedPublications().stream()
+                    .anyMatch(p -> p.getId().equals(pub.getId()));
+            dto.setSavedByMe(isSaved);
+        } else {
+            dto.setLikedByMe(false);
+            dto.setSavedByMe(false);
+        }
+
+        dto.setImages(pub.getImages().stream().map(img -> {
+            ImageResponseDto imgDto = new ImageResponseDto();
+            imgDto.setId(img.getId());
+            boolean showClean = false;
+            if (viewer != null) {
+                if (Boolean.FALSE.equals(pub.getHideCleanImage())) {
+                    showClean = true;
+                }
+            }
+            if (showClean) {
+                imgDto.setUrl(imageService.generatePresignedUrl(img.getCleanFileKey()));
+            } else {
+                imgDto.setUrl(img.getUrl());
+            }
+            return imgDto;
+        }).collect(Collectors.toList()));
+
+        dto.setTags(pub.getTags().stream()
+                .map(tg -> modelMapper.map(tg, TagsResponseDto.class))
+                .collect(Collectors.toList()));
+
+        dto.setPlace(pub.getPlace() != null ? modelMapper.map(pub.getPlace(), PlaceDataDto.class) : null);
+
+        if (Boolean.TRUE.equals(pub.getModerated())) {
+            dto.setDescription("[MODERATED CONTENT]");
+            dto.setImages(null);
+            dto.setTags(null);
+            dto.setPlace(null);
+            dto.setCommentsCount(0);
+            dto.setHeartsCount(0);
+            dto.setModerated(true);
+        }
+
+        return dto;
     }
 
     public List<PlaceMapSummaryDto> getPlacesInView(double minLat, double minLon, double maxLat, double maxLon) {
@@ -201,7 +272,6 @@ public class MapService {
     private PlaceDataDto mapToPlaceDataDto(JsonPlaceDataDto nominatimData) {
         PlaceDataDto trustedData = new PlaceDataDto();
         trustedData.setOsmId(nominatimData.getOsmId());
-        trustedData.setOsmType(nominatimData.getOsmType());
         trustedData.setName(nominatimData.getName() != null ? nominatimData.getName() : nominatimData.getDisplayName());
 
         trustedData.setAddress(nominatimData.getDisplayName());
