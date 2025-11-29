@@ -35,6 +35,7 @@ import com.artpond.backend.publication.infrastructure.PublicationRepository;
 import com.artpond.backend.tag.dto.TagsResponseDto;
 import com.artpond.backend.user.domain.User;
 import com.artpond.backend.user.dto.PublicUserDto;
+import com.artpond.backend.user.infrastructure.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import java.util.List;
@@ -46,6 +47,7 @@ public class MapService {
     private final RestTemplate restTemplate;
     private final PublicationRepository publicationRepository;
     private final ImageService imageService;
+    private final UserRepository userRepository; // Inyectamos UserRepository
 
     private static final int MAX_RESULTS_LIMIT = 150;
     private static final double MAX_VIEWPORT_DEGREE_DIFF = 1.0;
@@ -54,8 +56,15 @@ public class MapService {
     private final ModelMapper modelMapper;
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
+    @Transactional(readOnly = true) // Importante: Abre una sesión Hibernate para Lazy Loading
     public Page<PublicationResponseDto> getPlacePosts(Long placeId, Pageable pageable, User currentUser) {
-        boolean canSeeExplicit = currentUser != null && Boolean.TRUE.equals(currentUser.getShowExplicit());
+        // Recargamos el usuario desde la DB para asegurar que esté "managed" por la sesión actual
+        User loadedUser = null;
+        if (currentUser != null) {
+            loadedUser = userRepository.findById(currentUser.getUserId()).orElse(null);
+        }
+
+        boolean canSeeExplicit = loadedUser != null && Boolean.TRUE.equals(loadedUser.getShowExplicit());
         Page<Publication> posts;
         if (canSeeExplicit) {
             posts = publicationRepository.findByPlace_IdAndModeratedFalseOrderByCreationDate(placeId, pageable);
@@ -63,7 +72,8 @@ public class MapService {
             posts = publicationRepository.findByPlace_IdAndContentWarningFalseAndModeratedFalseOrderByCreationDate(placeId, pageable);
         }
         
-        return posts.map(pub -> toDto(pub, currentUser));
+        final User viewer = loadedUser;
+        return posts.map(pub -> toDto(pub, viewer));
     }
 
     private PublicationResponseDto toDto(Publication pub, User viewer) {

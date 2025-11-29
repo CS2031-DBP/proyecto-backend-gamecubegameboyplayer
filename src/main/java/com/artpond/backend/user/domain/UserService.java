@@ -137,10 +137,10 @@ public class UserService implements UserDetailsService {
 
     public UserResponseDto registerUser (RegisterUserDto dto, PasswordEncoder passwordEncoder) {
         if (userRepository.findByUsername(dto.getUsername()).isPresent()) {
-            throw new BadCredentialsException("Invalid credentials");
+            throw new BadRequestException("El username ya esta siendo usado. Intenta con otro.");
         }
         if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
-            throw new BadCredentialsException("Invalid credentials");
+            throw new BadRequestException("Ya hay una cuenta registrada con este correo.");
         }
 
         User user = new User();

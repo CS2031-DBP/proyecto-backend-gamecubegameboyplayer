@@ -42,7 +42,7 @@ public class AuthenticationService {
     private final ApplicationEventPublisher publisher;
     private final RefreshTokenService refreshTokenService;
 
-    public LoginResponseDto jwtRegister(final RegisterUserDto dto) throws BadCredentialsException {
+    public LoginResponseDto jwtRegister(final RegisterUserDto dto) throws BadRequestException {
         final UserResponseDto createdUser = userService.registerUser(dto, passwordEncoder);
 
         final UserDetails user = userService.loadUserByUsername(createdUser.getUsername());
