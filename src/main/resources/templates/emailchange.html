@@ -1,0 +1,60 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Artpond: Aviso de cambio de correo electronico</title>
+  </head>
+  <body
+    style="
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #cfd6e8; padding: 40px;
+    "
+  >
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td align="center">
+          <table
+            width="700"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="background-color: #ffffff; box-shadow: 5px 5px darkgray; padding: 20px"
+          >
+            <tr>
+              <td align="center" style="padding-bottom: 10px;">
+                
+              </td>
+            </tr>
+            <tr>
+              <td style="color: #2b2b2b; font-size: 16px; line-height: 1.6">
+                <p>
+                  Hola, <strong th:text="${userName}"></strong>.
+                </p>
+                <p>
+                  Te notificamos que el correo electrónico asignado a esta cuenta ha sido
+                  modificado, por lo que ya no recibirás ninguna notificación de <strong>Artpond</strong>
+                  en este correo.
+                </p>
+                <p style="margin-top: 30px">
+                  Si crees de que se trata de algún error,
+                  puedes comunicarte con nuestro soporte técnico <a th:href="${frontendUrl} + '/terms/support'">aquí</a>.
+                </p> 
+                <hr
+                  style="
+                    margin: 8px 0;
+                    border: none;
+                    border-top: 1px solid #ddd;
+                  "
+                />
+                <p style="font-size: 14px; color: #9c9c9c; text-align: center">
+                  © 2025 artpond.ink & Artpond Staff<br>
+                  Al subir contenido a Artpond, estás sujeto a cumplir las <a th:href="${frontendUrl} + '/terms/rules'">reglas preestablecidas</a> del sitio.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
